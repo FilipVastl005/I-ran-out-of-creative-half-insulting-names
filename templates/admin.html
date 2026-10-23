@@ -58,6 +58,15 @@
       </svg>
       <span>Media Library & Disk</span>
     </button>
+    <button type="button" class="admin-tab-btn {% if active_tab == 'storage' %}active{% endif %}" data-tab="tab-storage">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="12" x2="2" y2="12"></line>
+        <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+        <line x1="6" y1="16" x2="6.01" y2="16"></line>
+        <line x1="10" y1="16" x2="10.01" y2="16"></line>
+      </svg>
+      <span>Storage & Disks</span>
+    </button>
   </div>
 
   <!-- TAB 1: CATEGORIZED FILE UPLOAD -->
@@ -519,6 +528,420 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+  </div>
+
+  <!-- TAB 5: STORAGE DEVICES & FILE STRUCTURE MANAGEMENT -->
+  <div id="tab-storage" class="admin-tab-pane {% if active_tab == 'storage' %}active{% endif %}">
+
+    <!-- Active Storage Target Status Card -->
+    <div class="storage-hero-card is-active-root">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 14px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+            <h2 style="font-size: 16px; font-weight: 600; color: var(--text-main); margin: 0;">Active Storage Target</h2>
+            <span class="role-pill active-target">Saving Data Here</span>
+            {% if storage_info.active_storage.is_default %}
+              <span class="role-pill user" style="font-size: 11px;">Default Root</span>
+            {% else %}
+              <span class="role-pill admin" style="font-size: 11px;">Custom Drive</span>
+            {% endif %}
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 13px; color: var(--accent-blue-text); background: var(--accent-blue-subtle); padding: 4px 10px; border-radius: var(--radius-xs); display: inline-block;">
+            {{ storage_info.active_storage.path }}
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <!-- Quick Scan Button for Active Storage -->
+          <form action="{{ url_for('admin_scan_media') }}" method="POST" style="margin: 0;">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input type="hidden" name="redirect_tab" value="storage">
+            <button type="submit" class="btn btn-sm btn-accent" title="Index existing media on this drive into database">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 13px; height: 13px;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Scan Active Storage</span>
+            </button>
+          </form>
+
+          <!-- Format/Verify Structure Button -->
+          <form action="{{ url_for('admin_storage_format') }}" method="POST" style="margin: 0;">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input type="hidden" name="target_path" value="{{ storage_info.active_storage.path }}">
+            <button type="submit" class="btn btn-sm" title="Ensure all required folders exist">
+              <span>Verify / Format Structure</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Capacity Usage Meter -->
+      <div style="margin-top: 14px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">
+          <span>
+            Capacity: <strong>{{ storage_info.active_storage.used_human }}</strong> used of <strong>{{ storage_info.active_storage.total_human }}</strong>
+          </span>
+          <span>
+            <strong>{{ storage_info.active_storage.free_human }}</strong> free ({{ storage_info.active_storage.percent_used }}% full)
+          </span>
+        </div>
+        <div class="storage-meter-track">
+          <div class="storage-meter-fill {% if storage_info.active_storage.percent_used > 90 %}high{% elif storage_info.active_storage.percent_used > 75 %}medium{% else %}normal{% endif %}"
+               style="width: {{ storage_info.active_storage.percent_used }}%;"></div>
+        </div>
+      </div>
+
+      <!-- App File Structure Status -->
+      <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">
+            Mateo App File Structure:
+          </span>
+          {% if storage_info.active_storage.formatted %}
+            <span class="role-pill success" style="margin-left: 6px; font-size: 11px;">Ready (6/6 Folders Initialized)</span>
+          {% else %}
+            <span class="role-pill warning" style="margin-left: 6px; font-size: 11px;">Incomplete (Missing: {{ storage_info.active_storage.missing_folders | join(', ') }})</span>
+          {% endif %}
+          <div class="storage-folder-pills">
+            {% for fld in ['videos', 'music', 'photos', 'files', 'incoming', 'user_drive'] %}
+              {% if fld in storage_info.active_storage.existing_folders %}
+                <span class="storage-folder-pill present" title="Folder ready on disk">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 10px; height: 10px;">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  {{ fld }}/
+                </span>
+              {% else %}
+                <span class="storage-folder-pill missing" title="Missing on disk">
+                  {{ fld }}/
+                </span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div style="font-size: 12px; color: var(--text-muted);">
+          Write Permissions: 
+          {% if storage_info.active_storage.writable %}
+            <span style="color: var(--status-success); font-weight: 600;">Writable</span>
+          {% else %}
+            <span style="color: var(--status-danger); font-weight: 600;">Read-Only (Error)</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Storage Targets (Choose where to save data) -->
+    <div class="card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div>
+          <h3 style="font-size: 15px; font-weight: 600; color: var(--text-main);">Configured Storage Targets</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+            Choose which storage device or mounted partition Mateo should use to save all incoming files and torrent downloads.
+          </p>
+        </div>
+      </div>
+
+      <div class="drive-table-wrapper">
+        <table class="drive-table">
+          <thead>
+            <tr>
+              <th>Target / Device</th>
+              <th>Mount Path</th>
+              <th>Filesystem</th>
+              <th>Capacity & Free Space</th>
+              <th>App Structure</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for target in storage_info.storage_targets %}
+            <tr>
+              <td>
+                <div style="font-weight: 500;">{{ target.label }}</div>
+                <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">{{ target.device_name }}</div>
+              </td>
+              <td>
+                <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);">
+                  {{ target.path }}
+                </span>
+              </td>
+              <td>
+                <span class="role-pill user" style="font-size: 11px;">{{ target.fstype }}</span>
+              </td>
+              <td>
+                <div style="font-size: 12px; font-family: var(--font-mono);">
+                  {{ target.used_human }} / {{ target.total_human }}
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted);">{{ target.free_human }} free ({{ target.percent_used }}%)</div>
+              </td>
+              <td>
+                {% if target.formatted %}
+                  <span class="role-pill success" style="font-size: 11px;">Ready (6/6)</span>
+                {% else %}
+                  <span class="role-pill warning" style="font-size: 11px;">Unformatted</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if target.is_active %}
+                  <span class="role-pill active-target">ACTIVE TARGET</span>
+                {% else %}
+                  <span style="font-size: 12px; color: var(--text-muted);">Available</span>
+                {% endif %}
+              </td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 6px; align-items: center;">
+                  {% if not target.is_active %}
+                    <form action="{{ url_for('admin_storage_set_active') }}" method="POST" style="margin: 0;">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <input type="hidden" name="target_path" value="{{ target.path }}">
+                      <input type="hidden" name="auto_format" value="1">
+                      <button type="submit" class="btn btn-sm btn-success" title="Switch active save target to this drive">
+                        Save Data Here
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  {% if not target.formatted %}
+                    <form action="{{ url_for('admin_storage_format') }}" method="POST" style="margin: 0;">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <input type="hidden" name="target_path" value="{{ target.path }}">
+                      <button type="submit" class="btn btn-sm" title="Create Mateo folders on this target">
+                        Format Structure
+                      </button>
+                    </form>
+                  {% else %}
+                    <form action="{{ url_for('admin_storage_format') }}" method="POST" style="margin: 0;" onsubmit="return confirm('Wipe and recreate clean app folders in {{ target.path }}? This clears previous files inside app directories.');">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <input type="hidden" name="target_path" value="{{ target.path }}">
+                      <input type="hidden" name="wipe" value="1">
+                      <button type="submit" class="btn btn-sm" style="color: var(--status-danger);" title="Clean and recreate folders">
+                        Re-format
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Connected Hardware Storage Devices (lsblk) -->
+    <div class="card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h3 style="font-size: 15px; font-weight: 600; color: var(--text-main);">
+            Connected Server Storage Devices (Disks & Partitions)
+          </h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+            Hardware block devices detected on Linux (NVMe, SATA HDDs, SSDs, USB storage).
+          </p>
+        </div>
+        <button type="button" class="btn btn-sm" onclick="window.location.reload();" title="Rescan connected hardware devices">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 13px; height: 13px;">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Refresh Devices</span>
+        </button>
+      </div>
+
+      {% if storage_info.block_devices %}
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          {% for dev in storage_info.block_devices %}
+          <div style="border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 16px; background: var(--bg-hover);">
+            
+            <div class="device-card-header">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; color: var(--accent-blue);">
+                    {% if dev.is_removable %}
+                      <path d="M6 2v6a6 6 0 0 0 12 0V2"></path>
+                      <line x1="12" y1="14" x2="12" y2="22"></line>
+                      <line x1="9" y1="18" x2="15" y2="18"></line>
+                    {% else %}
+                      <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                      <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                      <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                      <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                    {% endif %}
+                  </svg>
+                  <span style="font-weight: 600; font-size: 14px; font-family: var(--font-mono);">{{ dev.path }}</span>
+                  <span class="role-pill user" style="font-size: 11px;">{{ dev.kind }}</span>
+                  {% if dev.is_ro %}<span class="role-pill child" style="font-size: 11px;">Read-Only</span>{% endif %}
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                  Model: <strong>{{ dev.model }}</strong> &bull; Total Size: <strong>{{ dev.size_human }}</strong>
+                </div>
+              </div>
+
+              <div>
+                <span style="font-family: var(--font-mono); font-size: 12px; font-weight: 600;">{{ dev.size_human }}</span>
+              </div>
+            </div>
+
+            <!-- Partitions sub-table -->
+            {% if dev.partitions %}
+              <div style="background: var(--bg-surface); border-radius: var(--radius-xs); border: 1px solid var(--border-subtle); overflow: hidden; margin-top: 10px;">
+                <table class="drive-table" style="font-size: 12px;">
+                  <thead>
+                    <tr style="background: var(--bg-subtle);">
+                      <th>Partition</th>
+                      <th>Filesystem</th>
+                      <th>Size</th>
+                      <th>Mountpoint</th>
+                      <th>App File Structure</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for part in dev.partitions %}
+                    <tr>
+                      <td style="font-family: var(--font-mono); font-weight: 500;">
+                        {{ part.name }}
+                        {% if part.label %}
+                          <span style="color: var(--text-muted); font-size: 11px;">({{ part.label }})</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <span class="role-pill user" style="font-size: 10px;">{{ part.fstype }}</span>
+                      </td>
+                      <td style="font-family: var(--font-mono);">{{ part.size_human }}</td>
+                      <td>
+                        {% if part.is_mounted %}
+                          {% for mp in part.mountpoints %}
+                            <div style="font-family: var(--font-mono); font-size: 11px;">{{ mp }}</div>
+                          {% endfor %}
+                        {% else %}
+                          <span style="color: var(--text-muted); font-style: italic;">Not mounted</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if part.is_mounted and part.mount_targets %}
+                          {% set mt = part.mount_targets[0] %}
+                          {% if mt.formatted %}
+                            <span class="role-pill success" style="font-size: 10px;">Ready (6/6)</span>
+                          {% else %}
+                            <span class="role-pill warning" style="font-size: 10px;">Unformatted</span>
+                          {% endif %}
+                        {% else %}
+                          <span style="color: var(--text-muted); font-size: 11px;">Mount to configure</span>
+                        {% endif %}
+                      </td>
+                      <td style="text-align: right;">
+                        {% if part.is_mounted and part.mount_targets %}
+                          {% set mt = part.mount_targets[0] %}
+                          <div style="display: inline-flex; gap: 4px;">
+                            {% if not mt.is_active %}
+                              <form action="{{ url_for('admin_storage_set_active') }}" method="POST" style="margin: 0;">
+                                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                                <input type="hidden" name="target_path" value="{{ mt.path }}">
+                                <input type="hidden" name="auto_format" value="1">
+                                <button type="submit" class="btn btn-sm btn-success" title="Save all data to this partition">
+                                  Save Here
+                                </button>
+                              </form>
+                            {% else %}
+                              <span class="role-pill active-target" style="font-size: 10px;">Active Target</span>
+                            {% endif %}
+
+                            <form action="{{ url_for('admin_storage_format') }}" method="POST" style="margin: 0;">
+                              <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                              <input type="hidden" name="target_path" value="{{ mt.path }}">
+                              <button type="submit" class="btn btn-sm" title="Format app folders on this partition">
+                                Format Structure
+                              </button>
+                            </form>
+                          </div>
+                        {% else %}
+                          <button type="button" class="btn btn-sm" onclick="document.getElementById('customTargetPath').value = '/mnt/{{ part.name }}'; document.getElementById('customTargetPath').scrollIntoView({behavior: 'smooth'});" title="Configure mount path">
+                            Setup Custom Path
+                          </button>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                Single block volume ({{ dev.fstype }}).
+              </div>
+            {% endif %}
+
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-muted); font-size: 13px;">No block devices returned by lsblk.</p>
+      {% endif %}
+    </div>
+
+    <!-- Custom Mount / External Storage Path Card -->
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 style="font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">
+        Format & Connect Any Storage Directory
+      </h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Format any mounted directory (external USB drive, secondary HDD mount, NFS/SMB share) into the Mateo file structure and optionally choose it as the active save target.
+      </p>
+
+      <form action="{{ url_for('admin_storage_format') }}" method="POST" id="customStorageForm">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="customTargetPath">Target Storage Directory Path *</label>
+            <input type="text" name="target_path" id="customTargetPath" class="form-control" placeholder="e.g. /media/external_drive or /mnt/storage_hdd" required style="font-family: var(--font-mono);">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+              Will create: <code>videos/</code>, <code>music/</code>, <code>photos/</code>, <code>files/</code>, <code>incoming/</code>, <code>user_drive/</code>.
+            </div>
+          </div>
+
+          <div style="padding-top: 22px;">
+            <button type="submit" class="btn btn-accent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                <line x1="12" y1="11" x2="12" y2="17"></line>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+              </svg>
+              <span>Format to App Structure</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px; display: flex; gap: 18px; align-items: center; font-size: 12px; color: var(--text-secondary);">
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <input type="checkbox" name="wipe" value="1">
+            <span>Wipe existing files inside app folders if re-formatting</span>
+          </label>
+        </div>
+      </form>
+    </div>
+
+    <!-- Storage Architecture Guide -->
+    <div class="card" style="background: var(--bg-hover);">
+      <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; color: var(--accent-blue);">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>How Mateo Storage Works</span>
+      </h4>
+      <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+        Mateo structures all storage into 6 dedicated categories: <code>videos/</code>, <code>music/</code>, <code>photos/</code>, <code>files/</code>, <code>incoming/</code> (torrents), and <code>user_drive/</code> (personal user files).
+        When you choose a storage device as the <strong>Active Target</strong>, all new uploads and torrent downloads are saved directly onto that device. Existing files remain streamable, and you can scan and index files on any connected drive into the database library at any time.
+      </p>
     </div>
 
   </div>

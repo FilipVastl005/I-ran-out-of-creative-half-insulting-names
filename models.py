@@ -76,6 +76,12 @@ CREATE TABLE IF NOT EXISTS user_drive (
     size_bytes    INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
+
+CREATE TABLE IF NOT EXISTS system_settings (
+    key           TEXT PRIMARY KEY,
+    value         TEXT NOT NULL,
+    updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
 """
 
 SCHEMA_INDEXES = """
@@ -609,3 +615,30 @@ def delete_torrent(torrent_id):
     conn = get_db()
     conn.execute("DELETE FROM torrents WHERE id = ?", (torrent_id,))
     conn.commit()
+
+
+# --------------------------------------------------------------------------- #
+# System Settings (Key-Value configuration persistence)
+# --------------------------------------------------------------------------- #
+def get_setting(key, default=None):
+    try:
+        conn = get_db()
+        row = conn.execute("SELECT value FROM system_settings WHERE key = ?", (key,)).fetchone()
+        return row["value"] if row else default
+    except Exception:
+        return default
+
+
+def set_setting(key, value):
+    try:
+        conn = get_db()
+        conn.execute(
+            "INSERT INTO system_settings (key, value, updated_at) "
+            "VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+            (key, str(value)),
+        )
+        conn.commit()
+    except Exception:
+        pass
+

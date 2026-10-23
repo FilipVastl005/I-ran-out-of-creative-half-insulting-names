@@ -32,6 +32,7 @@ from werkzeug.utils import secure_filename
 
 import downloader
 import models
+import storage_manager
 
 # --------------------------------------------------------------------------- #
 # Paths & configuration
@@ -70,6 +71,7 @@ app.config.update(
     SECRET_KEY=_load_secret_key(),
     DATABASE=os.path.join(INSTANCE_DIR, "mateo.db"),
     MEDIA_ROOT=MEDIA_ROOT,
+    DEFAULT_MEDIA_ROOT=MEDIA_ROOT,
     CATEGORY_DIRS=CATEGORY_DIRS,
     TORRENT_INCOMING_DIR=os.path.join(MEDIA_ROOT, TORRENT_INCOMING_DIR),
     # Uploads: cap a single request at 20 GB by default (override via env, in bytes).
@@ -102,6 +104,8 @@ for _ext, _type in {
 
 models.init_app(app)
 downloader.init_app(app)
+storage_manager.init_storage(app)
+
 
 
 # --------------------------------------------------------------------------- #
@@ -254,12 +258,18 @@ def breadcrumbs(folder):
 
 
 def resolve_media_path(rel_path):
-    """Absolute path for a DB rel_path, guaranteed to stay inside MEDIA_ROOT."""
+    """Absolute path for a DB rel_path, guaranteed to stay inside MEDIA_ROOT or fallback root."""
     root = os.path.realpath(app.config["MEDIA_ROOT"])
     full = os.path.realpath(os.path.join(root, rel_path))
-    if os.path.commonpath([root, full]) != root or not os.path.isfile(full):
-        abort(404)
-    return full
+    if os.path.commonpath([root, full]) == root and os.path.isfile(full):
+        return full
+    # Check default root fallback if active storage differs and file was saved previously
+    default_root = os.path.realpath(app.config.get("DEFAULT_MEDIA_ROOT", root))
+    if default_root != root:
+        fallback = os.path.realpath(os.path.join(default_root, rel_path))
+        if os.path.commonpath([default_root, fallback]) == default_root and os.path.isfile(fallback):
+            return fallback
+    abort(404)
 
 
 # --------------------------------------------------------------------------- #
@@ -591,9 +601,14 @@ def _resolve_drive_path(rel_path):
     """Absolute path for a user_drive rel_path, with traversal guard."""
     root = os.path.realpath(app.config["MEDIA_ROOT"])
     full = os.path.realpath(os.path.join(root, rel_path))
-    if os.path.commonpath([root, full]) != root or not os.path.isfile(full):
-        abort(404)
-    return full
+    if os.path.commonpath([root, full]) == root and os.path.isfile(full):
+        return full
+    default_root = os.path.realpath(app.config.get("DEFAULT_MEDIA_ROOT", root))
+    if default_root != root:
+        fallback = os.path.realpath(os.path.join(default_root, rel_path))
+        if os.path.commonpath([default_root, fallback]) == default_root and os.path.isfile(fallback):
+            return fallback
+    abort(404)
 
 
 @app.route("/drive")
@@ -785,6 +800,7 @@ def admin_panel():
     disk_stats = get_disk_stats()
     is_online = downloader.is_daemon_online(app.config)
     transmission_status = "Online" if is_online else "Offline (daemon not running)"
+    storage_info = storage_manager.list_connected_devices(app.config)
     return render_template(
         "admin.html",
         users=users,
@@ -793,6 +809,7 @@ def admin_panel():
         disk_stats=disk_stats,
         transmission_status=transmission_status,
         transmission_online=is_online,
+        storage_info=storage_info,
         active_tab=request.args.get("tab", "upload"),
     )
 
@@ -1115,7 +1132,55 @@ def admin_scan_media():
                     except Exception:
                         pass
     flash(f"Disk scan completed. Indexed {count} new media items.", "success")
-    return redirect(url_for("admin_panel", tab="library"))
+    redirect_tab = request.form.get("redirect_tab") or request.args.get("tab") or "library"
+    return redirect(url_for("admin_panel", tab=redirect_tab))
+
+
+# --------------------------------------------------------------------------- #
+# Storage Management Routes (Formatting & Target Selection)
+# --------------------------------------------------------------------------- #
+@app.route("/admin/storage/format", methods=["POST"])
+@admin_required
+def admin_storage_format():
+    target_path = request.form.get("target_path", "").strip()
+    wipe = bool(request.form.get("wipe") in ("1", "true", "on"))
+    if not target_path:
+        flash("Target storage path cannot be empty.", "error")
+        return redirect(url_for("admin_panel", tab="storage"))
+
+    success, msg = storage_manager.format_app_structure(target_path, wipe=wipe)
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+    return redirect(url_for("admin_panel", tab="storage"))
+
+
+@app.route("/admin/storage/set-active", methods=["POST"])
+@admin_required
+def admin_storage_set_active():
+    target_path = request.form.get("target_path", "").strip()
+    auto_format = request.form.get("auto_format", "1") in ("1", "true", "on")
+    if not target_path:
+        flash("Storage path cannot be empty.", "error")
+        return redirect(url_for("admin_panel", tab="storage"))
+
+    success, msg = storage_manager.set_active_storage(app, target_path, auto_format=auto_format)
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+    return redirect(url_for("admin_panel", tab="storage"))
+
+
+@app.route("/api/admin/storage", methods=["GET"])
+@admin_required
+def api_admin_storage():
+    try:
+        data = storage_manager.list_connected_devices(app.config)
+        return jsonify({"success": True, "data": data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 # --------------------------------------------------------------------------- #
@@ -1170,8 +1235,8 @@ def create_user_cmd(username, role, age, password):
 
 if __name__ == "__main__":
     app.run(
-        host=os.environ.get("MATEO_HOST", "172.21.210.78"),
-        port=int(os.environ.get("MATEO_PORT", 8080)),
+        host=os.environ.get("MATEO_HOST", "0.0.0.0"),
+        port=int(os.environ.get("MATEO_PORT", 8000)),
         threaded=True,
         debug=False,
     )

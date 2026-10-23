@@ -1886,3 +1886,123 @@ img, video {
     padding: 16px 12px 60px;
   }
 }
+
+/* ==========================================================================
+   Storage Device Management Styles
+   ========================================================================== */
+.btn-success {
+  background-color: var(--status-success);
+  color: #ffffff;
+  border: 1px solid var(--status-success);
+}
+.btn-success:hover {
+  background-color: var(--status-success-hover);
+  border-color: var(--status-success-hover);
+  color: #ffffff;
+}
+
+.role-pill.active-target {
+  background: var(--status-success-subtle);
+  color: var(--status-success-text);
+  border: 1px solid rgba(30, 142, 62, 0.4);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(30, 142, 62, 0.15);
+}
+
+.role-pill.success {
+  background: var(--status-success-subtle);
+  color: var(--status-success-text);
+  border: 1px solid transparent;
+}
+
+.role-pill.warning {
+  background: var(--status-warning-subtle);
+  color: var(--status-warning-text);
+  border: 1px solid transparent;
+}
+
+.storage-hero-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.storage-hero-card.is-active-root {
+  border-left: 4px solid var(--status-success);
+}
+
+.storage-meter-track {
+  background: var(--bg-hover);
+  border-radius: var(--radius-full);
+  height: 8px;
+  overflow: hidden;
+  position: relative;
+  margin: 10px 0;
+  border: 1px solid var(--border-subtle);
+}
+
+.storage-meter-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+  background-color: var(--accent-blue);
+}
+
+.storage-meter-fill.normal {
+  background-color: var(--status-success);
+}
+
+.storage-meter-fill.medium {
+  background-color: var(--status-warning);
+}
+
+.storage-meter-fill.high {
+  background-color: var(--status-danger);
+}
+
+.storage-folder-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.storage-folder-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.storage-folder-pill.present {
+  background: var(--status-success-subtle);
+  color: var(--status-success-text);
+  border: 1px solid rgba(30, 142, 62, 0.2);
+}
+
+.storage-folder-pill.missing {
+  background: var(--status-danger-subtle);
+  color: var(--status-danger-text);
+  border: 1px dashed rgba(217, 48, 37, 0.4);
+}
+
+.device-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.device-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
