@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <a href="{{ url_for('home') }}" class="brand-logo" title="Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <span class="server-hw-tag" title="Direct-play low CPU architecture">DirectPlay</span>
+      </div>
+
+      {% if current_user %}
+      <nav>
+        <ul class="nav-links">
+          <li class="nav-item {% if request.endpoint in ('home', 'dashboard') %}active{% endif %}">
+            <a href="{{ url_for('home') }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.endpoint in ('user_drive', 'drive_upload', 'drive_mkdir', 'drive_delete', 'drive_rename', 'drive_download') %}active{% endif %}">
+            <a href="{{ url_for('user_drive') }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+                <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+              </svg>
+              <span>My Drive</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.endpoint == 'files' %}active{% endif %}">
+            <a href="{{ url_for('files') }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Files</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.endpoint == 'photos' %}active{% endif %}">
+            <a href="{{ url_for('photos') }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <span>Photos</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.endpoint == 'music' %}active{% endif %}">
+            <a href="{{ url_for('music') }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+              </svg>
+              <span>Audio</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.endpoint in ('videos', 'watch') %}active{% endif %}">
+            <a href="{{ url_for('videos') }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <line x1="2" y1="7" x2="7" y2="7"></line>
+                <line x1="2" y1="17" x2="7" y2="17"></line>
+                <line x1="17" y1="17" x2="22" y2="17"></line>
+                <line x1="17" y1="7" x2="22" y2="7"></line>
+              </svg>
+              <span>Video</span>
+            </a>
+          </li>
+          {% if is_admin %}
+          <li class="nav-item {% if request.endpoint == 'admin_panel' %}active{% endif %}">
+            <a href="{{ url_for('admin_panel') }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Admin</span>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+
+      <div class="user-controls">
+        <div class="user-badge">
+          <span>{{ current_user.username }}</span>
+          {% if current_user.age is defined and current_user.age is not none %}
+          <span class="role-pill user" title="Account Age: {{ current_user.age }}">{{ current_user.age }}yo</span>
+          {% endif %}
+          <span class="role-pill {{ current_user.role }}">{{ current_user.role }}</span>
+        </div>
+        <form action="{{ url_for('logout') }}" method="POST" style="margin: 0;">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-danger" title="Sign out">Logout</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Flash Message Notifications -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+      <div class="flash-message {{ category }}">
+        <span>{{ message }}</span>
+        <button type="button" class="flash-close" onclick="this.parentElement.remove();">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main Content Block -->
+  <main class="main-wrapper">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Universal Vanilla JS Lightbox Image Viewer -->
+  <div id="lightboxModal" class="lightbox-modal" role="dialog" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose" title="Close (Esc)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <button class="lightbox-btn lightbox-prev" id="lightboxPrev" title="Previous (Left Arrow)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="lightbox-btn lightbox-next" id="lightboxNext" title="Next (Right Arrow)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" class="lightbox-img" src="" alt="Viewing photo">
+      <div class="lightbox-caption">
+        <span id="lightboxTitle"></span>
+        <a id="lightboxDownload" href="" class="btn btn-sm btn-primary" download>Download Original</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vanilla JavaScript Lightbox & Alert Scripts -->
+  <script>
+    (function() {
+      const modal = document.getElementById('lightboxModal');
+      const img = document.getElementById('lightboxImg');
+      const title = document.getElementById('lightboxTitle');
+      const downloadLink = document.getElementById('lightboxDownload');
+      const closeBtn = document.getElementById('lightboxClose');
+      const prevBtn = document.getElementById('lightboxPrev');
+      const nextBtn = document.getElementById('lightboxNext');
+
+      let currentList = [];
+      let currentIndex = -1;
+
+      window.openLightbox = function(index, items) {
+        currentList = items;
+        currentIndex = index;
+        updateModal();
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+      };
+
+      function updateModal() {
+        if (currentIndex < 0 || currentIndex >= currentList.length) return;
+        const item = currentList[currentIndex];
+        img.src = item.src;
+        title.textContent = item.title || item.filename;
+        downloadLink.href = item.download;
+      }
+
+      function closeModal() {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        img.src = '';
+      }
+
+      function prev() {
+        if (currentList.length === 0) return;
+        currentIndex = (currentIndex - 1 + currentList.length) % currentList.length;
+        updateModal();
+      }
+
+      function next() {
+        if (currentList.length === 0) return;
+        currentIndex = (currentIndex + 1) % currentList.length;
+        updateModal();
+      }
+
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (prevBtn) prevBtn.addEventListener('click', prev);
+      if (nextBtn) nextBtn.addEventListener('click', next);
+
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (!modal.classList.contains('open')) return;
+        if (e.key === 'Escape') closeModal();
+        if (e.key === 'ArrowLeft') prev();
+        if (e.key === 'ArrowRight') next();
+      });
+
+      // Auto-fade flash messages after 6 seconds
+      setTimeout(function() {
+        const flashes = document.querySelectorAll('.flash-message');
+        flashes.forEach(function(el) {
+          el.style.transition = 'opacity 0.4s ease';
+          el.style.opacity = '0';
+          setTimeout(() => el.remove(), 400);
+        });
+      }, 6000);
+    })();
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

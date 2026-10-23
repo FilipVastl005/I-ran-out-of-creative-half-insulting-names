@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Files{% endblock %}
+
+{% block content %}
+<div class="drive-layout">
+
+  <!-- Left Sidebar (Google Drive Style) -->
+  <aside class="drive-sidebar">
+    <a href="{{ url_for('user_drive') }}" class="drive-new-btn" title="Go to My Drive to upload files">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+        <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+      </svg>
+      <span>My Drive</span>
+    </a>
+    {% if is_admin %}
+    <a href="{{ url_for('admin_panel', tab='upload') }}" class="drive-new-btn" title="Admin: upload to shared library" style="margin-top: 8px; background: var(--glass-bg); color: var(--text-muted);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Admin Upload</span>
+    </a>
+    {% endif %}
+
+    <ul class="drive-nav-list">
+      <li class="drive-nav-item active">
+        <a href="{{ url_for('files') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>My Files</span>
+        </a>
+      </li>
+      <li class="drive-nav-item">
+        <a href="{{ url_for('photos') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span>Photos</span>
+        </a>
+      </li>
+      <li class="drive-nav-item">
+        <a href="{{ url_for('music') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+          <span>Audio</span>
+        </a>
+      </li>
+      <li class="drive-nav-item">
+        <a href="{{ url_for('videos') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+            <line x1="7" y1="2" x2="7" y2="22"></line>
+            <line x1="17" y1="2" x2="17" y2="22"></line>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+          </svg>
+          <span>Video</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Quick Storage Indicator -->
+    <div class="drive-storage-sidebar">
+      <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; color: var(--text-muted);">
+          <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+        </svg>
+        <span>Storage Vault</span>
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted);">Direct Disk Storage</div>
+    </div>
+  </aside>
+
+  <!-- Main Drive Panel -->
+  <div class="drive-main">
+
+    <!-- Top Toolbar: Breadcrumbs, Search, Grid/List Toggle -->
+    <div class="drive-top-bar">
+      <!-- Breadcrumb navigation -->
+      <div class="breadcrumbs">
+        <a href="{{ url_for('files') }}">My Files</a>
+        {% for crumb in crumbs %}
+        <span>/</span>
+        <a href="{{ url_for('files', folder=crumb.path) }}">{{ crumb.name }}</a>
+        {% endfor %}
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <!-- Search filter input -->
+        <div class="drive-search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="driveSearchInput" class="drive-search-input" placeholder="Search files...">
+        </div>
+
+        <!-- Google Drive Grid / List Toggle -->
+        <div class="drive-view-toggle">
+          <button type="button" class="view-toggle-btn active" id="btnViewList" title="List View">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+          </button>
+          <button type="button" class="view-toggle-btn" id="btnViewGrid" title="Grid View">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Folders Section (if any subfolders exist) -->
+    {% if subfolders %}
+    <div class="drive-section-title">Folders</div>
+    <div class="drive-folder-grid">
+      {% for sub in subfolders %}
+      <a href="{{ url_for('files', folder=sub.path) }}" class="drive-folder-card" title="Open {{ sub.name }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="drive-folder-name">{{ sub.name }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Files Container (Toggles between List and Grid) -->
+    {% if items %}
+    <div class="drive-section-title">Files</div>
+    <div id="filesContainer" class="files-container view-list">
+
+      <!-- View 1: List View (Google Drive Table) -->
+      <div class="drive-table-wrapper">
+        <table class="drive-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Size</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="filesTableBody">
+            {% for f in items %}
+            <tr class="file-item-row" data-filename="{{ f.filename | lower }}" data-title="{{ f.title | lower }}">
+              <td>
+                <div class="drive-file-cell">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg>
+                  <span>{{ f.filename }}</span>
+                  {% if f.min_age and f.min_age > 0 %}
+                  <span class="role-pill child" style="font-size: 10px;">{{ f.min_age }}+</span>
+                  {% elif f.age_restricted %}
+                  <span class="role-pill child" style="font-size: 10px;">18+</span>
+                  {% endif %}
+                </div>
+              </td>
+              <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">
+                {{ f.mime_type }}
+              </td>
+              <td style="font-family: var(--font-mono); font-size: 12px;">
+                {{ f.size_bytes | human_size }}
+              </td>
+              <td style="text-align: right;">
+                <a href="{{ url_for('download', media_id=f.id) }}" class="btn btn-sm btn-accent" download title="Download file">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>Download</span>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- View 2: Grid View (Google Drive File Cards) -->
+      <div class="drive-grid-wrapper" id="filesGridContainer">
+        {% for f in items %}
+        <div class="drive-file-card file-item-grid" data-filename="{{ f.filename | lower }}" data-title="{{ f.title | lower }}">
+          <div class="drive-file-card-preview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <div class="drive-file-card-info">
+            <div class="drive-file-card-name" title="{{ f.filename }}">
+              {{ f.filename }}
+            </div>
+            <div class="drive-file-card-meta">
+              <span>{{ f.size_bytes | human_size }}</span>
+              <a href="{{ url_for('download', media_id=f.id) }}" class="btn btn-sm btn-icon" download title="Download">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; color: var(--text-muted); padding: 48px 20px;">
+      No files found in this folder.
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Vanilla JS: Google Drive Grid / List View Toggle & Instant Search
+  (function() {
+    const container = document.getElementById('filesContainer');
+    const btnList = document.getElementById('btnViewList');
+    const btnGrid = document.getElementById('btnViewGrid');
+    const searchInput = document.getElementById('driveSearchInput');
+
+    if (!container) return;
+
+    // Load saved view preference from localStorage (defaults to list)
+    const savedView = localStorage.getItem('drive_view_mode') || 'list';
+    setView(savedView);
+
+    if (btnList) {
+      btnList.addEventListener('click', () => setView('list'));
+    }
+    if (btnGrid) {
+      btnGrid.addEventListener('click', () => setView('grid'));
+    }
+
+    function setView(mode) {
+      if (mode === 'grid') {
+        container.classList.remove('view-list');
+        container.classList.add('view-grid');
+        btnGrid.classList.add('active');
+        btnList.classList.remove('active');
+        localStorage.setItem('drive_view_mode', 'grid');
+      } else {
+        container.classList.remove('view-grid');
+        container.classList.add('view-list');
+        btnList.classList.add('active');
+        btnGrid.classList.remove('active');
+        localStorage.setItem('drive_view_mode', 'list');
+      }
+    }
+
+    // Live search filter
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        const tableRows = document.querySelectorAll('.file-item-row');
+        const gridCards = document.querySelectorAll('.file-item-grid');
+
+        tableRows.forEach(row => {
+          const fn = row.getAttribute('data-filename') || '';
+          const title = row.getAttribute('data-title') || '';
+          const match = fn.includes(query) || title.includes(query);
+          row.style.display = match ? '' : 'none';
+        });
+
+        gridCards.forEach(card => {
+          const fn = card.getAttribute('data-filename') || '';
+          const title = card.getAttribute('data-title') || '';
+          const match = fn.includes(query) || title.includes(query);
+          card.style.display = match ? '' : 'none';
+        });
+      });
+    }
+  })();
+</script>
+{% endblock %}

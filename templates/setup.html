@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Initial Setup</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-base);">
+
+  <div class="card" style="width: 100%; max-width: 420px; padding: 32px; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--accent-blue-subtle); color: var(--accent-blue); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+      <h1 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Initial Setup</h1>
+      <p style="font-size: 13px; color: var(--text-muted);">
+        Create the primary administrator account for the server.
+      </p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div>
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label" for="username">Admin Username</label>
+        <input type="text" name="username" id="username" class="form-control" required autofocus autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password (min 8 characters)</label>
+        <input type="password" name="password" id="password" class="form-control" required minlength="8">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password_confirm">Confirm Password</label>
+        <input type="password" name="password_confirm" id="password_confirm" class="form-control" required minlength="8">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 9px;">
+        Initialize Admin Account
+      </button>
+    </form>
+  </div>
+
+</body>
+</html>

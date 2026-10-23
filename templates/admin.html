@@ -1,0 +1,687 @@
+{% extends "base.html" %}
+
+{% block title %}Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Server Administration</span>
+      </h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+        Manage media uploads, torrent queue, user permissions, and disk storage.
+      </p>
+    </div>
+    <div>
+      <span class="role-pill admin">Superuser Active</span>
+    </div>
+  </div>
+
+  <!-- Admin Navigation Tabs (Pure Vanilla JS Switching) -->
+  <div class="admin-tabs">
+    <button type="button" class="admin-tab-btn {% if active_tab == 'upload' %}active{% endif %}" data-tab="tab-upload">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+      <span>File Upload</span>
+    </button>
+    <button type="button" class="admin-tab-btn {% if active_tab == 'torrent' %}active{% endif %}" data-tab="tab-torrent">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span>Torrent Downloader</span>
+    </button>
+    <button type="button" class="admin-tab-btn {% if active_tab == 'users' %}active{% endif %}" data-tab="tab-users">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <span>User Management</span>
+    </button>
+    <button type="button" class="admin-tab-btn {% if active_tab == 'library' %}active{% endif %}" data-tab="tab-library">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+      </svg>
+      <span>Media Library & Disk</span>
+    </button>
+  </div>
+
+  <!-- TAB 1: CATEGORIZED FILE UPLOAD -->
+  <div id="tab-upload" class="admin-tab-pane {% if active_tab == 'upload' %}active{% endif %}">
+    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px;">
+      
+      <div class="card">
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Direct Media Upload</h2>
+        
+        <form action="{{ url_for('admin_upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label class="form-label" for="uploadCategory">Target Category *</label>
+              <select name="category" id="uploadCategory" class="form-control" required>
+                <option value="video">Video (Movies, Shows, Clips)</option>
+                <option value="music">Audio (MP3, FLAC, AAC, OGG)</option>
+                <option value="photo">Photo (JPEG, PNG, WebP, AVIF)</option>
+                <option value="file">Files (PDF, ZIP, ISO, Docs)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="uploadFolder">Sub-folder (Optional)</label>
+              <input type="text" name="folder" id="uploadFolder" class="form-control" placeholder="e.g. Movies/SciFi or Beatles/Abbey Road">
+            </div>
+          </div>
+
+          <!-- Age Constraint (Minimum Age Rating) -->
+          <div class="form-group" style="background: var(--bg-hover); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <label class="form-label" for="uploadMinAge" style="font-weight: 600; margin-bottom: 4px;">
+              Age Constraint (Minimum Age Required)
+            </label>
+            <select name="min_age" id="uploadMinAge" class="form-control" style="max-width: 260px;">
+              <option value="0" selected>All Ages (0+)</option>
+              <option value="6">6+ (Young Children)</option>
+              <option value="12">12+ (Pre-teens)</option>
+              <option value="13">13+ (Teens)</option>
+              <option value="16">16+ (Mature Teens)</option>
+              <option value="18">18+ (Adults Only)</option>
+            </select>
+            <span style="display: block; font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+              Users younger than this age will not see or be able to stream this media.
+            </span>
+          </div>
+
+          <!-- Drag and Drop Dropzone -->
+          <div class="form-group">
+            <label class="form-label">Select Files</label>
+            <div class="dropzone" id="dropzoneArea">
+              <div class="dropzone-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <div style="font-weight: 600; margin-bottom: 4px; color: var(--text-main);">Drag & Drop files here, or click to browse</div>
+              <div style="font-size: 12px; color: var(--text-muted);">Direct disk streaming preserves memory and I/O.</div>
+              <input type="file" name="files" id="fileInput" multiple style="display: none;">
+            </div>
+            <div id="fileListPreview" style="margin-top: 10px; font-size: 13px; color: var(--text-secondary);"></div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">
+              <span>Start Upload</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Upload Guidelines / Optimization Info -->
+      <div>
+        <div class="card" style="margin-bottom: 16px;">
+          <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">Optimization Tips</h3>
+          <ul style="font-size: 13px; color: var(--text-secondary); padding-left: 18px; line-height: 1.6;">
+            <li><strong>Zero Transcoding:</strong> Videos are served directly without CPU-heavy conversion. Use standard H.264/AAC for universal playback.</li>
+            <li><strong>Sequential I/O:</strong> Files are written directly to disk with buffered streaming.</li>
+            <li><strong>Batch Ingestion:</strong> Copy files directly into <code>media/</code> and click <em>Scan Media Root</em>.</li>
+          </ul>
+        </div>
+
+        {% if disk_stats and disk_stats.total > 0 %}
+        <div class="card">
+          <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Storage Breakdown</h3>
+          <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+            <div>Total: <strong>{{ disk_stats.total | human_size }}</strong></div>
+            <div>Used: <strong>{{ disk_stats.used | human_size }} ({{ disk_stats.percent }}%)</strong></div>
+            <div>Free: <strong>{{ disk_stats.free | human_size }}</strong></div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 2: TORRENT DOWNLOADER -->
+  <div id="tab-torrent" class="admin-tab-pane {% if active_tab == 'torrent' %}active{% endif %}">
+    
+    <!-- Daemon Status Banner -->
+    {% if not transmission_online %}
+    <div style="background: var(--status-warning-subtle); border: 1px solid rgba(242, 153, 0, 0.4); color: var(--status-warning-text); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 20px; font-size: 13px;">
+      <strong>Transmission Daemon is Offline:</strong> Torrents you add will be queued in SQLite and dispatched when Transmission starts.
+      <div style="margin-top: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);">
+        Command: <code>sudo systemctl start transmission-daemon</code>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-size: 16px; font-weight: 600;">Add Torrent Download</h2>
+        <span class="role-pill {% if transmission_online %}admin{% else %}user{% endif %}">
+          Transmission: {{ transmission_status }}
+        </span>
+      </div>
+
+      <form action="{{ url_for('admin_torrent') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 14px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="torrentSource">Magnet URI or .torrent URL</label>
+            <input type="text" name="source" id="torrentSource" class="form-control"
+                   placeholder="magnet:?xt=urn:btih:... or https://example.com/file.torrent">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="torrentFile">...or Upload .torrent File</label>
+            <input type="file" name="torrent_file" id="torrentFile" class="form-control" accept=".torrent">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="torrentCategory">Target Media Category *</label>
+            <select name="category" id="torrentCategory" class="form-control">
+              <option value="video" selected>Video (Save to media/videos)</option>
+              <option value="music">Audio (Save to media/music)</option>
+              <option value="photo">Photo (Save to media/photos)</option>
+              <option value="file">Files (Save to media/files)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="torrentFolder">Sub-folder (Optional)</label>
+            <input type="text" name="folder" id="torrentFolder" class="form-control" placeholder="e.g. Movies/Action">
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
+            <label class="form-label" for="torrentMinAge">Age Constraint (Minimum Age)</label>
+            <select name="min_age" id="torrentMinAge" class="form-control">
+              <option value="0" selected>All Ages (0+)</option>
+              <option value="6">6+</option>
+              <option value="12">12+</option>
+              <option value="13">13+</option>
+              <option value="16">16+</option>
+              <option value="18">18+</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Start Download</button>
+      </form>
+    </div>
+
+    <!-- Active Torrents Table -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 15px; font-weight: 600;">Active Queue & Monitor</h3>
+        <button type="button" class="btn btn-sm" id="refreshTorrentsBtn" title="Fetch live Transmission metrics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <div class="drive-table-wrapper">
+        <table class="drive-table" id="torrentLiveTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Progress</th>
+              <th>Speed</th>
+              <th>ETA</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="torrentTableBody">
+            {% if torrents %}
+              {% for t in torrents %}
+              <tr data-torrent-id="{{ t.id }}">
+                <td style="font-family: var(--font-mono);">#{{ t.id }}</td>
+                <td style="font-weight: 500; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <div title="{{ t.name }}">{{ t.name }}</div>
+                  {% if t.age_restricted %}
+                  <span class="role-pill child" style="font-size: 9px;">Restricted</span>
+                  {% endif %}
+                </td>
+                <td><span class="role-pill user">{{ t.category }}</span></td>
+                <td style="min-width: 140px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+                    <span class="torrent-pct">{{ t.progress }}%</span>
+                    <span style="color: var(--text-muted);">{{ 'Imported' if t.imported else 'Downloading' }}</span>
+                  </div>
+                  <div style="background: var(--bg-hover); height: 6px; border-radius: 3px; overflow: hidden;">
+                    <div style="background: var(--accent-blue); width: {{ t.progress }}%; height: 100%;"></div>
+                  </div>
+                </td>
+                <td class="torrent-speed" style="font-family: var(--font-mono); font-size: 12px;">{{ t.rate_download }}</td>
+                <td class="torrent-eta" style="font-size: 12px; color: var(--text-muted);">{{ t.eta }}</td>
+                <td>
+                  <span class="role-pill user" style="font-family: var(--font-mono);">{{ t.status }}</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    {% if t.can_pause %}
+                    <form action="{{ url_for('admin_torrent_pause', torrent_id=t.id) }}" method="POST" style="margin: 0;">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm" title="Pause">Pause</button>
+                    </form>
+                    {% elif t.can_resume %}
+                    <form action="{{ url_for('admin_torrent_resume', torrent_id=t.id) }}" method="POST" style="margin: 0;">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm" title="Resume">Resume</button>
+                    </form>
+                    {% endif %}
+                    <form action="{{ url_for('admin_torrent_delete', torrent_id=t.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Remove torrent record?');">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-danger" title="Remove">Remove</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                  No active or queued torrents. Add a magnet link above.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: USER MANAGEMENT & ACCESS CONTROL -->
+  <div id="tab-users" class="admin-tab-pane {% if active_tab == 'users' %}active{% endif %}">
+    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px;">
+
+      <!-- Users List -->
+      <div class="card">
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">User Accounts</h2>
+        
+        <div class="drive-table-wrapper">
+          <table class="drive-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Age</th>
+                <th>Access Role</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td style="font-weight: 600;">
+                  {{ u.username }}
+                  {% if u.id == current_user.id %}
+                  <span style="font-size: 11px; color: var(--accent-blue); font-weight: normal;">(You)</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form action="{{ url_for('admin_user_age', user_id=u.id) }}" method="POST" style="display: inline-flex; align-items: center; gap: 4px; margin: 0;">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <input type="number" name="age" value="{{ u.age }}" min="0" max="150" class="form-control" style="width: 58px; padding: 2px 6px; font-size: 12px;" title="User age in years">
+                    <button type="submit" class="btn btn-sm" title="Save Age">Save</button>
+                  </form>
+                </td>
+                <td>
+                  <form action="{{ url_for('admin_user_role', user_id=u.id) }}" method="POST" style="display: inline-flex; align-items: center; gap: 6px; margin: 0;">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <select name="role" class="form-control" style="padding: 3px 8px; font-size: 12px; width: auto;" onchange="this.form.submit();">
+                      <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                      <option value="user" {% if u.role == 'user' %}selected{% endif %}>Standard User</option>
+                      <option value="child" {% if u.role == 'child' %}selected{% endif %}>Child (Restricted)</option>
+                    </select>
+                  </form>
+                </td>
+                <td>
+                  {% if u.is_active %}
+                  <span class="role-pill" style="background: var(--status-success-subtle); color: var(--status-success-text);">Active</span>
+                  {% else %}
+                  <span class="role-pill" style="background: var(--status-danger-subtle); color: var(--status-danger-text);">Disabled</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 12px; color: var(--text-muted);">
+                  {{ u.last_login or 'Never' }}
+                </td>
+                <td>
+                  {% if u.id != current_user.id %}
+                  <div style="display: flex; gap: 6px;">
+                    <form action="{{ url_for('admin_user_toggle_active', user_id=u.id) }}" method="POST" style="margin: 0;">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm">
+                        {{ 'Disable' if u.is_active else 'Enable' }}
+                      </button>
+                    </form>
+                    <form action="{{ url_for('admin_user_delete', user_id=u.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete user {{ u.username }} permanently?');">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Create New User Form -->
+      <div class="card" style="height: fit-content;">
+        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 14px;">Add New Account</h3>
+        
+        <form action="{{ url_for('admin_user_create') }}" method="POST">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+          <div class="form-group">
+            <label class="form-label" for="newUsername">Username</label>
+            <input type="text" name="username" id="newUsername" class="form-control" required autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="newPassword">Password (min 8 chars)</label>
+            <input type="password" name="password" id="newPassword" class="form-control" required minlength="8">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="newAge">User Age (Years)</label>
+            <input type="number" name="age" id="newAge" class="form-control" value="18" min="0" max="150" required placeholder="e.g. 13, 16, 20">
+            <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">
+              Media with age constraints above this age will be hidden from this user.
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="newRole">Role</label>
+            <select name="role" id="newRole" class="form-control">
+              <option value="user" selected>Standard User (Full access)</option>
+              <option value="child">Child (Restricted Media Hidden)</option>
+              <option value="admin">Admin (Full + Management)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Create User</button>
+        </form>
+
+        <div style="margin-top: 18px; font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+          <strong>Age Constraint Engine:</strong> Filtered at the SQLite database engine level. A 13yo user will not see or stream 16+ or 18+ media, while 16yo and 20yo users can access it.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 4: MEDIA LIBRARY & DISK SCAN -->
+  <div id="tab-library" class="admin-tab-pane {% if active_tab == 'library' %}active{% endif %}">
+    
+    <div class="card" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 style="font-size: 15px; font-weight: 600;">Local Disk Scanner</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          Scans media directories to index files copied via SSH, Samba, or rsync.
+        </p>
+      </div>
+      <form action="{{ url_for('admin_scan_media') }}" method="POST" style="margin: 0;">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-accent">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Scan Media Root Now</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Media Table with 1-Click Age-Restriction Toggle -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 15px; font-weight: 600;">Media Items ({{ media_items | length }})</h3>
+        <input type="text" id="librarySearchInput" class="form-control" placeholder="Quick search..." style="width: 220px; padding: 4px 10px; font-size: 12px;">
+      </div>
+
+      <div class="drive-table-wrapper">
+        <table class="drive-table" id="libraryTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title / File</th>
+              <th>Category</th>
+              <th>Folder</th>
+              <th>Size</th>
+              <th>Age Rating</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in media_items %}
+            <tr>
+              <td style="font-family: var(--font-mono); font-size: 12px;">#{{ item.id }}</td>
+              <td style="font-weight: 500;">
+                <div>{{ item.title }}</div>
+                <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">{{ item.filename }}</div>
+              </td>
+              <td><span class="role-pill user">{{ item.category }}</span></td>
+              <td style="font-size: 12px; color: var(--text-secondary);">{{ item.folder or '/' }}</td>
+              <td style="font-family: var(--font-mono); font-size: 12px;">{{ item.size_bytes | human_size }}</td>
+              <td>
+                <form action="{{ url_for('admin_media_min_age', media_id=item.id) }}" method="POST" style="margin: 0; display: inline-flex; align-items: center; gap: 4px;">
+                  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                  <select name="min_age" class="form-control" style="padding: 2px 6px; font-size: 12px; width: auto;" onchange="this.form.submit();">
+                    <option value="0" {% if item.min_age == 0 %}selected{% endif %}>All (0+)</option>
+                    <option value="6" {% if item.min_age == 6 %}selected{% endif %}>6+</option>
+                    <option value="12" {% if item.min_age == 12 %}selected{% endif %}>12+</option>
+                    <option value="13" {% if item.min_age == 13 %}selected{% endif %}>13+</option>
+                    <option value="16" {% if item.min_age == 16 %}selected{% endif %}>16+</option>
+                    <option value="18" {% if item.min_age >= 18 %}selected{% endif %}>18+</option>
+                  </select>
+                </form>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <a href="{{ url_for('stream', media_id=item.id) }}" target="_blank" class="btn btn-sm" title="Direct Stream">Play</a>
+                  <form action="{{ url_for('admin_media_delete', media_id=item.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete {{ item.filename }} from disk and database?');">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">Del</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Tab Switching Logic (Pure Vanilla JS)
+  (function() {
+    const tabBtns = document.querySelectorAll('.admin-tab-btn');
+    const tabPanes = document.querySelectorAll('.admin-tab-pane');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanes.forEach(p => p.classList.remove('active'));
+
+        btn.classList.add('active');
+        const activePane = document.getElementById(targetTab);
+        if (activePane) activePane.classList.add('active');
+
+        // Update URL query parameter without page reload
+        const tabKey = targetTab.replace('tab-', '');
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabKey);
+        window.history.replaceState({}, '', url);
+      });
+    });
+
+    // Drag and Drop Upload Interaction
+    const dropzone = document.getElementById('dropzoneArea');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('fileListPreview');
+
+    if (dropzone && fileInput) {
+      dropzone.addEventListener('click', () => fileInput.click());
+
+      ['dragenter', 'dragover'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropzone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('dragover');
+        });
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          updatePreview();
+        }
+      });
+
+      fileInput.addEventListener('change', updatePreview);
+
+      function updatePreview() {
+        const count = fileInput.files.length;
+        if (count === 0) {
+          preview.textContent = '';
+        } else if (count === 1) {
+          preview.textContent = `Selected: ${fileInput.files[0].name} (${(fileInput.files[0].size / (1024*1024)).toFixed(2)} MB)`;
+        } else {
+          preview.textContent = `Selected ${count} files ready for upload.`;
+        }
+      }
+    }
+
+    // Live Torrent Status Polling (Vanilla JS)
+    const refreshTorrentsBtn = document.getElementById('refreshTorrentsBtn');
+    const torrentTableBody = document.getElementById('torrentTableBody');
+
+    async function refreshTorrents() {
+      try {
+        const res = await fetch('/api/torrents');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.torrents || !torrentTableBody) return;
+
+        if (data.torrents.length === 0) {
+          torrentTableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">No active or queued torrents. Add a magnet link above.</td></tr>`;
+          return;
+        }
+
+        let html = '';
+        data.torrents.forEach(t => {
+          const restrictedBadge = t.age_restricted ? '<span class="role-pill child" style="font-size: 9px;">Restricted</span>' : '';
+          const importedText = t.imported ? 'Imported' : 'Downloading';
+          const pauseBtn = t.can_pause ? `<form action="/admin/torrent/${t.id}/pause" method="POST" style="margin: 0;"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="btn btn-sm" title="Pause">Pause</button></form>` : '';
+          const resumeBtn = t.can_resume ? `<form action="/admin/torrent/${t.id}/resume" method="POST" style="margin: 0;"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="btn btn-sm" title="Resume">Resume</button></form>` : '';
+          
+          html += `
+            <tr data-torrent-id="${t.id}">
+              <td style="font-family: var(--font-mono);">#${t.id}</td>
+              <td style="font-weight: 500; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <div title="${t.name}">${t.name}</div>
+                ${restrictedBadge}
+              </td>
+              <td><span class="role-pill user">${t.category}</span></td>
+              <td style="min-width: 140px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+                  <span class="torrent-pct">${t.progress}%</span>
+                  <span style="color: var(--text-muted);">${importedText}</span>
+                </div>
+                <div style="background: var(--bg-hover); height: 6px; border-radius: 3px; overflow: hidden;">
+                  <div style="background: var(--accent-blue); width: ${t.progress}%; height: 100%;"></div>
+                </div>
+              </td>
+              <td class="torrent-speed" style="font-family: var(--font-mono); font-size: 12px;">${t.rate_download}</td>
+              <td class="torrent-eta" style="font-size: 12px; color: var(--text-muted);">${t.eta}</td>
+              <td>
+                <span class="role-pill user" style="font-family: var(--font-mono);">${t.status}</span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 4px;">
+                  ${pauseBtn}
+                  ${resumeBtn}
+                  <form action="/admin/torrent/${t.id}/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Remove torrent record?');">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-danger" title="Remove">Remove</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        torrentTableBody.innerHTML = html;
+      } catch (err) {
+        console.debug('Torrent poll notice:', err);
+      }
+    }
+
+    if (refreshTorrentsBtn) {
+      refreshTorrentsBtn.addEventListener('click', refreshTorrents);
+    }
+
+    setInterval(() => {
+      const pane = document.getElementById('tab-torrent');
+      if (pane && pane.classList.contains('active')) {
+        refreshTorrents();
+      }
+    }, 6000);
+
+    const searchInput = document.getElementById('librarySearchInput');
+    const table = document.getElementById('libraryTable');
+    if (searchInput && table) {
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(query) ? '' : 'none';
+        });
+      });
+    }
+  })();
+</script>
+{% endblock %}

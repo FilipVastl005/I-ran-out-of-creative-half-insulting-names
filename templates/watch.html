@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}{{ media.title }} - Video{% endblock %}
+
+{% block content %}
+<div class="video-player-container">
+
+  <!-- Breadcrumbs & Navigation -->
+  <div class="breadcrumbs">
+    <a href="{{ url_for('videos') }}">Video</a>
+    {% for crumb in crumbs %}
+    <span>/</span>
+    <a href="{{ url_for('videos', folder=crumb.path) }}">{{ crumb.name }}</a>
+    {% endfor %}
+    <span>/</span>
+    <span style="color: var(--text-main); font-weight: 500;">{{ media.title }}</span>
+  </div>
+
+  <!-- HTML5 Video Player with Byte-Range Seeking -->
+  <div class="video-screen-wrapper">
+    <video id="directPlayVideo" controls autoplay preload="metadata">
+      <source src="{{ url_for('stream', media_id=media.id) }}" type="{{ media.mime_type }}">
+      Your browser does not support HTML5 video direct-play.
+    </video>
+  </div>
+
+  <!-- Video Details & Actions -->
+  <div class="video-details-card">
+    <div>
+      <h1 style="font-size: 18px; font-weight: 600; margin-bottom: 4px; color: var(--text-main);">
+        {{ media.title }}
+      </h1>
+      <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 12px; align-items: center;">
+        <span>{{ media.filename }}</span>
+        <span>&bull;</span>
+        <span>{{ media.size_bytes | human_size }}</span>
+        <span>&bull;</span>
+        <span style="font-family: var(--font-mono);">{{ media.mime_type }}</span>
+        {% if media.min_age and media.min_age > 0 %}
+        <span class="role-pill child">{{ media.min_age }}+</span>
+        {% elif media.age_restricted %}
+        <span class="role-pill child">18+</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Navigation & Download Controls -->
+    <div style="display: flex; gap: 8px; align-items: center;">
+      {% if prev_id %}
+      <a href="{{ url_for('watch', media_id=prev_id) }}" class="btn btn-sm" title="Previous Video in Folder">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;">
+          <polygon points="19 20 9 12 19 4 19 20"></polygon>
+          <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line>
+        </svg>
+        <span>Previous</span>
+      </a>
+      {% endif %}
+      {% if next_id %}
+      <a href="{{ url_for('watch', media_id=next_id) }}" class="btn btn-sm" title="Next Video in Folder">
+        <span>Next</span>
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;">
+          <polygon points="5 4 15 12 5 20 5 4"></polygon>
+          <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
+        </svg>
+      </a>
+      {% endif %}
+      <a href="{{ url_for('download', media_id=media.id) }}" class="btn btn-sm btn-accent" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Download</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Keyboard Shortcuts Helper -->
+  <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted); display: flex; gap: 16px; justify-content: center;">
+    <span><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">Space</kbd> Play/Pause</span>
+    <span><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">&larr;</kbd> / <kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">&rarr;</kbd> Seek &plusmn;10s</span>
+    <span><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">F</kbd> Fullscreen</span>
+    <span><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">M</kbd> Mute</span>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function() {
+    const video = document.getElementById('directPlayVideo');
+    if (!video) return;
+
+    // Keyboard Shortcuts for video player
+    document.addEventListener('keydown', function(e) {
+      if (['input', 'textarea', 'select'].includes(document.activeElement.tagName.toLowerCase())) return;
+
+      switch(e.key) {
+        case ' ':
+          e.preventDefault();
+          if (video.paused) video.play(); else video.pause();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 10);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+          break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          if (!document.fullscreenElement) {
+            video.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
+          }
+          break;
+        case 'm':
+        case 'M':
+          e.preventDefault();
+          video.muted = !video.muted;
+          break;
+      }
+    });
+  })();
+</script>
+{% endblock %}

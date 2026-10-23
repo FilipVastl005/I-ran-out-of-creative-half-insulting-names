@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="root-dashboard">
+
+  <!-- Header -->
+  <div class="root-dashboard-header">
+    <h1>Dashboard</h1>
+    <p>Select an application to launch</p>
+  </div>
+
+  <!-- Storage & Hardware Overview -->
+  {% if disk_stats and disk_stats.total > 0 %}
+  <div class="storage-widget">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-weight: 600; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; color: var(--text-muted);">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+          <line x1="6" y1="6" x2="6.01" y2="6"></line>
+          <line x1="6" y1="18" x2="6.01" y2="18"></line>
+        </svg>
+        Storage & Server Status
+      </span>
+      <span style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">
+        {{ disk_stats.used | human_size }} / {{ disk_stats.total | human_size }} ({{ disk_stats.percent }}% used)
+      </span>
+    </div>
+    <div class="storage-bar-wrapper">
+      <div class="storage-bar-fill {% if disk_stats.percent > 90 %}danger{% elif disk_stats.percent > 75 %}warning{% endif %}"
+           style="width: {{ disk_stats.percent }}%;"></div>
+    </div>
+    <div class="storage-labels">
+      <span>{{ disk_stats.free | human_size }} available</span>
+      <span>Direct-Play Engine &bull; Low I/O</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Static Grid of Application Links Routing to Separate Subdomains / Apps -->
+  <div class="apps-grid">
+
+    <!-- App 0: My Drive (all users) -->
+    <a href="{{ url_for('user_drive') }}" class="app-card" title="My Personal Drive">
+      <div class="app-card-icon icon-drive" style="background: linear-gradient(135deg, hsl(240,70%,55%), hsl(270,65%,60%));">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+          <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+        </svg>
+      </div>
+      <div class="app-card-title">
+        <span>My Drive</span>
+        <svg class="app-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+      <div class="app-card-desc">
+        Personal cloud storage — upload, organise, and download your own files and folders.
+      </div>
+      <span class="app-card-link-badge">drive.local</span>
+    </a>
+
+    <!-- App 1: Files -->
+    <a href="{{ url_for('files') }}" class="app-card" title="Open Files">
+      <div class="app-card-icon icon-files">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <div class="app-card-title">
+        <span>Files</span>
+        <svg class="app-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+      <div class="app-card-desc">
+        Cloud storage, documents, directory browsing, and file downloads.
+      </div>
+      <span class="app-card-link-badge">files.local</span>
+    </a>
+
+    <!-- App 2: Photos -->
+    <a href="{{ url_for('photos') }}" class="app-card" title="Open Photos">
+      <div class="app-card-icon icon-photos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+      </div>
+      <div class="app-card-title">
+        <span>Photos</span>
+        <svg class="app-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+      <div class="app-card-desc">
+        Responsive photo gallery with masonry grid and instant lightbox preview.
+      </div>
+      <span class="app-card-link-badge">photos.local</span>
+    </a>
+
+    <!-- App 3: Audio -->
+    <a href="{{ url_for('music') }}" class="app-card" title="Open Audio">
+      <div class="app-card-icon icon-music">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+      </div>
+      <div class="app-card-title">
+        <span>Audio</span>
+        <svg class="app-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+      <div class="app-card-desc">
+        Music tracklist, sequential audio streamer, and fixed player interface.
+      </div>
+      <span class="app-card-link-badge">music.local</span>
+    </a>
+
+    <!-- App 4: Video -->
+    <a href="{{ url_for('videos') }}" class="app-card" title="Open Video">
+      <div class="app-card-icon icon-videos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+          <line x1="7" y1="2" x2="7" y2="22"></line>
+          <line x1="17" y1="2" x2="17" y2="22"></line>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <line x1="2" y1="7" x2="7" y2="7"></line>
+          <line x1="2" y1="17" x2="7" y2="17"></line>
+          <line x1="17" y1="17" x2="22" y2="17"></line>
+          <line x1="17" y1="7" x2="22" y2="7"></line>
+        </svg>
+      </div>
+      <div class="app-card-title">
+        <span>Video</span>
+        <svg class="app-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+      <div class="app-card-desc">
+        Zero-transcoding HTML5 direct-play movies, shows, and clips.
+      </div>
+      <span class="app-card-link-badge">video.local</span>
+    </a>
+
+    {% if is_admin %}
+    <!-- App 5: Admin Panel -->
+    <a href="{{ url_for('admin_panel') }}" class="app-card" title="Open Admin Panel">
+      <div class="app-card-icon icon-admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </div>
+      <div class="app-card-title">
+        <span>Admin</span>
+        <svg class="app-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+      <div class="app-card-desc">
+        Server settings, user roles, torrent downloader, and library ingestion.
+      </div>
+      <span class="app-card-link-badge">admin.local</span>
+    </a>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

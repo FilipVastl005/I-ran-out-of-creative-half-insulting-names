@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Photos{% endblock %}
+
+{% block content %}
+<div class="photos-container">
+
+  <!-- Top Action & Info Bar (Google Photos Style) -->
+  <div class="photos-toolbar">
+    <div>
+      <h1 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <span>Photos</span>
+      </h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+        {{ total }} photos in library &bull; Masonry View
+      </p>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <!-- Search filter -->
+      <div class="drive-search-box" style="max-width: 280px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="photoSearchInput" class="drive-search-input" placeholder="Filter photos...">
+      </div>
+
+      {% if is_admin %}
+      <a href="{{ url_for('admin_panel', tab='upload') }}" class="btn btn-sm btn-primary" title="Upload photos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Upload</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Google Photos Responsive Masonry Grid -->
+  {% if items %}
+  <div class="photos-masonry-grid" id="galleryPhotoGrid">
+    {% for p in items %}
+    <div class="photo-card"
+         data-index="{{ loop.index0 }}"
+         data-src="{{ url_for('stream', media_id=p.id) }}"
+         data-download="{{ url_for('download', media_id=p.id) }}"
+         data-title="{{ p.title }}"
+         data-filename="{{ p.filename }}">
+      <img class="photo-card-img" src="{{ url_for('stream', media_id=p.id) }}" alt="{{ p.title }}" loading="lazy">
+      <div class="photo-card-overlay">
+        <span style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
+          {{ p.title }}
+        </span>
+        <span style="font-family: var(--font-mono); font-size: 11px; flex-shrink: 0;">
+          {{ p.size_bytes | human_size }}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('photos', page=page-1) }}" class="btn btn-sm" title="Previous page">
+      &larr; Previous
+    </a>
+    {% endif %}
+    <span style="font-size: 13px; color: var(--text-muted); padding: 0 10px;">
+      Page {{ page }} of {{ pages }}
+    </span>
+    {% if page < pages %}
+    <a href="{{ url_for('photos', page=page+1) }}" class="btn btn-sm" title="Next page">
+      Next &rarr;
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="card" style="text-align: center; color: var(--text-muted); padding: 50px 20px;">
+    No photos available in library.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function() {
+    const photoCards = Array.from(document.querySelectorAll('#galleryPhotoGrid .photo-card'));
+    const photoData = photoCards.map(item => ({
+      src: item.getAttribute('data-src'),
+      download: item.getAttribute('data-download'),
+      title: item.getAttribute('data-title'),
+      filename: item.getAttribute('data-filename')
+    }));
+
+    photoCards.forEach((item, idx) => {
+      item.addEventListener('click', () => {
+        window.openLightbox(idx, photoData);
+      });
+    });
+
+    // Client-side instant filter
+    const searchInput = document.getElementById('photoSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        photoCards.forEach(card => {
+          const title = (card.getAttribute('data-title') || '').toLowerCase();
+          const fn = (card.getAttribute('data-filename') || '').toLowerCase();
+          const match = title.includes(query) || fn.includes(query);
+          card.style.display = match ? '' : 'none';
+        });
+      });
+    }
+  })();
+</script>
+{% endblock %}

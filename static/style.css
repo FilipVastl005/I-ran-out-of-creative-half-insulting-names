@@ -1,0 +1,1888 @@
+/* ==========================================================================
+   Clean, Minimalist Light Theme Design System
+   Professional SaaS Aesthetic (Google Workspace / Spotify / Apple inspired)
+   Completely Light Theme - Zero Dark Mode - Zero Emojis
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Clean, Crisp Light Palette */
+  --bg-base: #f8f9fa;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f3f4;
+  --bg-active: #e8eaed;
+  --bg-input: #ffffff;
+  --bg-subtle: #f8f9fa;
+
+  /* Borders */
+  --border-subtle: #e5e7eb;
+  --border-medium: #d1d5db;
+  --border-strong: #9ca3af;
+
+  /* Typography Colors */
+  --text-main: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --text-light: #9ca3af;
+
+  /* Primary Accent (Google / Clean Blue) */
+  --accent-blue: #1a73e8;
+  --accent-blue-hover: #1557b0;
+  --accent-blue-subtle: #e8f0fe;
+  --accent-blue-text: #174ea6;
+
+  /* Semantic Status Colors */
+  --status-success: #1e8e3e;
+  --status-success-hover: #137333;
+  --status-success-subtle: #e6f4ea;
+  --status-success-text: #137333;
+
+  --status-danger: #d93025;
+  --status-danger-hover: #b31412;
+  --status-danger-subtle: #fce8e6;
+  --status-danger-text: #c5221f;
+
+  --status-warning: #f29900;
+  --status-warning-subtle: #fef7e0;
+  --status-warning-text: #b06000;
+
+  /* User Role Badges */
+  --badge-admin: #1a73e8;
+  --badge-admin-bg: #e8f0fe;
+  --badge-user: #5f6368;
+  --badge-user-bg: #f1f3f4;
+  --badge-child: #d93025;
+  --badge-child-bg: #fce8e6;
+
+  /* Border Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows (Subtle, Clean) */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+
+  /* Fonts */
+  --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Base Reset & Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100vh;
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  font-family: var(--font-stack);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--accent-blue-hover);
+  text-decoration: none;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* App Header & Top Navigation */
+.app-header {
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-xs);
+}
+
+.header-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-logo svg {
+  width: 22px;
+  height: 22px;
+  color: var(--accent-blue);
+}
+
+.server-hw-tag {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+}
+
+.nav-item a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.nav-item a svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+}
+
+.nav-item a:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.nav-item a:hover svg {
+  color: var(--text-main);
+}
+
+.nav-item.active a {
+  background-color: var(--accent-blue-subtle);
+  color: var(--accent-blue-text);
+  font-weight: 600;
+}
+
+.nav-item.active a svg {
+  color: var(--accent-blue);
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.role-pill {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.role-pill.admin {
+  background: var(--badge-admin-bg);
+  color: var(--badge-admin);
+  border: 1px solid rgba(26, 115, 232, 0.2);
+}
+
+.role-pill.user {
+  background: var(--badge-user-bg);
+  color: var(--badge-user);
+  border: 1px solid var(--border-subtle);
+}
+
+.role-pill.child {
+  background: var(--badge-child-bg);
+  color: var(--badge-child);
+  border: 1px solid rgba(217, 48, 37, 0.2);
+}
+
+/* Flash Messages */
+.flash-container {
+  max-width: 1440px;
+  margin: 16px auto 0;
+  padding: 0 24px;
+}
+
+.flash-message {
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+
+.flash-message.success {
+  background: var(--status-success-subtle);
+  color: var(--status-success-text);
+  border-color: rgba(30, 142, 62, 0.2);
+}
+
+.flash-message.error {
+  background: var(--status-danger-subtle);
+  color: var(--status-danger-text);
+  border-color: rgba(217, 48, 37, 0.2);
+}
+
+.flash-message.warning {
+  background: var(--status-warning-subtle);
+  color: var(--status-warning-text);
+  border-color: rgba(242, 153, 0, 0.2);
+}
+
+.flash-message.info {
+  background: var(--accent-blue-subtle);
+  color: var(--accent-blue-text);
+  border-color: rgba(26, 115, 232, 0.2);
+}
+
+.flash-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+/* Main Container Layout */
+.main-wrapper {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 24px 80px;
+}
+
+/* Common UI Elements & Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 18px;
+  font-family: inherit;
+}
+
+.btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+  border-color: var(--border-strong);
+}
+
+.btn:active {
+  background: var(--bg-active);
+}
+
+.btn-primary {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-blue-hover);
+  border-color: var(--accent-blue-hover);
+  color: #ffffff;
+}
+
+.btn-accent {
+  background: var(--accent-blue-subtle);
+  border-color: rgba(26, 115, 232, 0.3);
+  color: var(--accent-blue-text);
+  font-weight: 600;
+}
+
+.btn-accent:hover {
+  background: #d2e3fc;
+  color: var(--accent-blue-hover);
+}
+
+.btn-danger {
+  background: var(--bg-surface);
+  color: var(--status-danger-text);
+  border-color: var(--border-subtle);
+}
+
+.btn-danger:hover {
+  background: var(--status-danger);
+  color: #ffffff;
+  border-color: var(--status-danger);
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.btn-icon {
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-main);
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px var(--accent-blue-subtle);
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.form-checkbox input[type="checkbox"] {
+  accent-color: var(--accent-blue);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Cards & Headers */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-xs);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.breadcrumbs a {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.breadcrumbs a:hover {
+  color: var(--accent-blue);
+}
+
+/* ==========================================================================
+   ROOT DASHBOARD: STATIC GRID OF LINKS TO SUBDOMAINS/APPS ONLY
+   Strictly NO media content, recent files, or photo previews!
+   ========================================================================== */
+
+.root-dashboard {
+  max-width: 1100px;
+  margin: 20px auto 40px;
+}
+
+.root-dashboard-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.root-dashboard-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.root-dashboard-header p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Storage & System Bar */
+.storage-widget {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-xs);
+}
+
+.storage-bar-wrapper {
+  background: var(--bg-hover);
+  height: 6px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin: 10px 0 6px;
+}
+
+.storage-bar-fill {
+  background: var(--accent-blue);
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.storage-bar-fill.warning {
+  background: var(--status-warning);
+}
+
+.storage-bar-fill.danger {
+  background: var(--status-danger);
+}
+
+.storage-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Static Apps Grid */
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.app-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-xs);
+  position: relative;
+  overflow: hidden;
+}
+
+.app-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-md);
+  background: var(--bg-surface);
+  text-decoration: none;
+}
+
+.app-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  transition: transform 0.2s ease;
+}
+
+.app-card:hover .app-card-icon {
+  transform: scale(1.05);
+}
+
+.app-card-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Specific Accent Tints for App Icons (Clean Google Style) */
+.icon-files { background: #e8f0fe; color: #1a73e8; }
+.icon-photos { background: #fef7e0; color: #f29900; }
+.icon-music { background: #e6f4ea; color: #1e8e3e; }
+.icon-videos { background: #fce8e6; color: #d93025; }
+.icon-admin { background: #f1f3f4; color: #5f6368; }
+
+.app-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.app-card-arrow {
+  color: var(--text-light);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.app-card:hover .app-card-arrow {
+  color: var(--accent-blue);
+  transform: translateX(3px);
+}
+
+.app-card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.app-card-link-badge {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+  margin-top: auto;
+}
+
+/* ==========================================================================
+   APP 1: FILES - GOOGLE DRIVE LAYOUT
+   Left sidebar, main search/toolbar, grid/list toggle
+   ========================================================================== */
+
+.drive-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .drive-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Drive Left Sidebar */
+.drive-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.drive-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: fit-content;
+}
+
+.drive-new-btn:hover {
+  box-shadow: var(--shadow-md);
+  background: var(--bg-hover);
+}
+
+.drive-new-btn svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent-blue);
+}
+
+.drive-nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drive-nav-item a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background 0.15s ease;
+}
+
+.drive-nav-item a svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+}
+
+.drive-nav-item a:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.drive-nav-item.active a {
+  background: var(--accent-blue-subtle);
+  color: var(--accent-blue-text);
+  font-weight: 600;
+}
+
+.drive-nav-item.active a svg {
+  color: var(--accent-blue);
+}
+
+.drive-storage-sidebar {
+  padding: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  margin-top: 12px;
+}
+
+/* Drive Main Content Area */
+.drive-main {
+  min-width: 0;
+}
+
+.drive-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.drive-search-box {
+  position: relative;
+  flex: 1;
+  max-width: 500px;
+}
+
+.drive-search-box svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+
+.drive-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  background: var(--bg-hover);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.drive-search-input:focus {
+  outline: none;
+  background: var(--bg-surface);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
+}
+
+.drive-view-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  border: 1px solid var(--border-subtle);
+}
+
+.view-toggle-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.view-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.view-toggle-btn:hover {
+  color: var(--text-main);
+}
+
+.view-toggle-btn.active {
+  background: var(--bg-surface);
+  color: var(--accent-blue);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Subfolders Grid */
+.drive-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 16px 0 10px;
+}
+
+.drive-folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.drive-folder-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-main);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.drive-folder-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-medium);
+  text-decoration: none;
+}
+
+.drive-folder-card svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.drive-folder-name {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Drive View: List View (Table) */
+.files-container.view-list .drive-table-wrapper {
+  display: block;
+}
+
+.files-container.view-list .drive-grid-wrapper {
+  display: none;
+}
+
+.drive-table-wrapper {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  box-shadow: var(--shadow-xs);
+}
+
+.drive-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.drive-table th {
+  background: var(--bg-surface);
+  padding: 10px 16px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.drive-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.drive-table tr:last-child td {
+  border-bottom: none;
+}
+
+.drive-table tr:hover td {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.drive-file-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.drive-file-cell svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Drive View: Grid View (Google Drive File Cards) */
+.files-container.view-grid .drive-table-wrapper {
+  display: none;
+}
+
+.files-container.view-grid .drive-grid-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.drive-file-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-xs);
+}
+
+.drive-file-card:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.drive-file-card-preview {
+  height: 110px;
+  background: var(--bg-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.drive-file-card-preview svg {
+  width: 36px;
+  height: 36px;
+}
+
+.drive-file-card-info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drive-file-card-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drive-file-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   APP 2: PHOTOS - GOOGLE PHOTOS LAYOUT
+   Responsive masonry grid, light minimalist backdrop, clean overlay
+   ========================================================================== */
+
+.photos-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.photos-masonry-grid {
+  column-count: 4;
+  column-gap: 12px;
+}
+
+@media (max-width: 1200px) {
+  .photos-masonry-grid { column-count: 3; }
+}
+
+@media (max-width: 768px) {
+  .photos-masonry-grid { column-count: 2; column-gap: 8px; }
+}
+
+@media (max-width: 480px) {
+  .photos-masonry-grid { column-count: 1; }
+}
+
+.photo-card {
+  break-inside: avoid;
+  margin-bottom: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.photo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-medium);
+}
+
+.photo-card-img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  background: var(--bg-hover);
+}
+
+.photo-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 12px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: #ffffff;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.photo-card:hover .photo-card-overlay {
+  opacity: 1;
+}
+
+/* Lightbox Modal (Clean, Light Frame / Dark Backdrop for Media Viewer) */
+.lightbox-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.9);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.lightbox-modal.open {
+  display: flex;
+}
+
+.lightbox-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  background: #000000;
+}
+
+.lightbox-caption {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #ffffff;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.lightbox-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.lightbox-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.lightbox-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.lightbox-prev { left: 24px; }
+.lightbox-next { right: 24px; }
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.lightbox-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.lightbox-close:hover {
+  background: var(--status-danger);
+}
+
+/* ==========================================================================
+   APP 3: AUDIO / MUSIC - SPOTIFY LAYOUT
+   Left sidebar, main tracklist with hero, fixed bottom audio player
+   ========================================================================== */
+
+.spotify-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 90px; /* Space for fixed bottom player */
+}
+
+@media (max-width: 900px) {
+  .spotify-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Spotify Left Sidebar */
+.spotify-sidebar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-xs);
+}
+
+.spotify-nav-header {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spotify-nav-header svg {
+  width: 16px;
+  height: 16px;
+}
+
+.spotify-nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spotify-nav-item a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.spotify-nav-item a:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.spotify-nav-item.active a {
+  background: var(--accent-blue-subtle);
+  color: var(--accent-blue-text);
+  font-weight: 600;
+}
+
+/* Spotify Main Content Area */
+.spotify-main {
+  min-width: 0;
+}
+
+/* Spotify Hero / Playlist Header */
+.spotify-hero {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e8f0fe 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-xs);
+}
+
+.spotify-hero-art {
+  width: 140px;
+  height: 140px;
+  background: #ffffff;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-blue);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.spotify-hero-art svg {
+  width: 64px;
+  height: 64px;
+}
+
+.spotify-hero-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.spotify-hero-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-blue);
+  margin-bottom: 4px;
+}
+
+.spotify-hero-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.spotify-hero-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spotify-play-hero-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.15s ease, background 0.15s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.spotify-play-hero-btn:hover {
+  transform: scale(1.06);
+  background: var(--accent-blue-hover);
+}
+
+.spotify-play-hero-btn svg {
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+}
+
+/* Spotify Tracklist Table */
+.spotify-tracklist-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.spotify-table-header {
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+}
+
+.spotify-track-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  background: var(--bg-surface);
+}
+
+.spotify-track-row:last-child {
+  border-bottom: none;
+}
+
+.spotify-track-row:hover {
+  background: var(--bg-hover);
+}
+
+.spotify-track-row.active {
+  background: var(--accent-blue-subtle);
+}
+
+.spotify-track-row.active .spotify-track-title {
+  color: var(--accent-blue-text);
+  font-weight: 600;
+}
+
+.spotify-track-num {
+  width: 36px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+}
+
+.spotify-track-row:hover .spotify-track-num .num-text {
+  display: none;
+}
+
+.spotify-track-row .play-hover-icon {
+  display: none;
+  width: 14px;
+  height: 14px;
+  color: var(--text-main);
+}
+
+.spotify-track-row:hover .spotify-track-num .play-hover-icon {
+  display: block;
+}
+
+.spotify-track-details {
+  flex: 1;
+  min-width: 0;
+  padding-right: 16px;
+}
+
+.spotify-track-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotify-track-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.spotify-track-album {
+  width: 180px;
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12px;
+}
+
+@media (max-width: 768px) {
+  .spotify-track-album {
+    display: none;
+  }
+}
+
+.spotify-track-size {
+  width: 80px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.spotify-track-actions {
+  width: 50px;
+  text-align: right;
+}
+
+/* Spotify Fixed Bottom Audio Player */
+.spotify-player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 500;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.spotify-player-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 280px;
+  min-width: 0;
+}
+
+.spotify-player-art {
+  width: 44px;
+  height: 44px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.spotify-player-art svg {
+  width: 22px;
+  height: 22px;
+}
+
+.spotify-player-info {
+  min-width: 0;
+}
+
+.spotify-player-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotify-player-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotify-player-center {
+  flex: 1;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.spotify-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.spotify-ctrl-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.spotify-ctrl-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.spotify-ctrl-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+.spotify-play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--text-main);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spotify-play-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.spotify-play-btn:hover {
+  transform: scale(1.05);
+  background: #000000;
+  color: #ffffff;
+}
+
+.spotify-scrubber-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.spotify-scrubber {
+  flex: 1;
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+  height: 4px;
+}
+
+.spotify-player-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 240px;
+}
+
+.spotify-vol-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.spotify-vol-row svg {
+  width: 16px;
+  height: 16px;
+}
+
+.spotify-vol-row input {
+  width: 90px;
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+  height: 4px;
+}
+
+/* ==========================================================================
+   APP 4: VIDEO LIBRARY & PLAYER
+   Clean Light Theme, Video Grid & Direct-Play Watch Page
+   ========================================================================== */
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.video-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.video-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
+}
+
+.video-thumbnail-placeholder {
+  height: 150px;
+  background: #f1f3f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.video-thumbnail-placeholder svg {
+  width: 44px;
+  height: 44px;
+  color: var(--text-muted);
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.video-card:hover .video-thumbnail-placeholder svg {
+  color: var(--accent-blue);
+  transform: scale(1.08);
+}
+
+.video-restricted-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--status-danger);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+}
+
+.video-info {
+  padding: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.video-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.video-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Dedicated Watch Player Page */
+.video-player-container {
+  max-width: 1060px;
+  margin: 0 auto;
+}
+
+.video-screen-wrapper {
+  background: #000000;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.video-screen-wrapper video {
+  width: 100%;
+  max-height: 72vh;
+  display: block;
+  outline: none;
+}
+
+.video-details-card {
+  margin-top: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-xs);
+}
+
+/* ==========================================================================
+   ADMIN PANEL & TABS
+   Light theme administration hub
+   ========================================================================== */
+
+.admin-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 24px;
+}
+
+.admin-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-tab-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-tab-btn:hover {
+  color: var(--text-main);
+}
+
+.admin-tab-btn.active {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.admin-tab-pane {
+  display: none;
+}
+
+.admin-tab-pane.active {
+  display: block;
+}
+
+/* Drag & Drop Upload Zone */
+.dropzone {
+  border: 2px dashed var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 36px 20px;
+  text-align: center;
+  background: var(--bg-hover);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent-blue);
+  background: var(--accent-blue-subtle);
+}
+
+.dropzone-icon {
+  margin-bottom: 10px;
+  color: var(--accent-blue);
+  display: flex;
+  justify-content: center;
+}
+
+.dropzone-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-container {
+    height: auto;
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .nav-links {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .main-wrapper {
+    padding: 16px 12px 60px;
+  }
+}

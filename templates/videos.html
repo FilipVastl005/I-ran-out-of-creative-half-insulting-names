@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Video{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <h1 class="section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+        <line x1="7" y1="2" x2="7" y2="22"></line>
+        <line x1="17" y1="2" x2="17" y2="22"></line>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <line x1="2" y1="7" x2="7" y2="7"></line>
+        <line x1="2" y1="17" x2="7" y2="17"></line>
+        <line x1="17" y1="17" x2="22" y2="17"></line>
+        <line x1="17" y1="7" x2="22" y2="7"></line>
+      </svg>
+      <span>Video</span>
+    </h1>
+    <div class="breadcrumbs" style="margin-top: 6px; margin-bottom: 0;">
+      <a href="{{ url_for('videos') }}">Root</a>
+      {% for crumb in crumbs %}
+      <span>/</span>
+      <a href="{{ url_for('videos', folder=crumb.path) }}">{{ crumb.name }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  {% if is_admin %}
+  <a href="{{ url_for('admin_panel', tab='upload') }}" class="btn btn-sm btn-primary" title="Upload Video">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+    <span>Upload Video</span>
+  </a>
+  {% endif %}
+</div>
+
+<!-- Subfolders -->
+{% if subfolders %}
+<div class="drive-section-title">Folders</div>
+<div class="drive-folder-grid">
+  {% for sub in subfolders %}
+  <a href="{{ url_for('videos', folder=sub.path) }}" class="drive-folder-card" title="Open {{ sub.name }}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <span class="drive-folder-name">{{ sub.name }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Video Grid -->
+{% if items %}
+<div class="video-grid">
+  {% for v in items %}
+  <div class="video-card">
+    <a href="{{ url_for('watch', media_id=v.id) }}" class="video-thumbnail-placeholder" title="Watch {{ v.title }}">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+      {% if v.min_age and v.min_age > 0 %}
+      <span class="video-restricted-badge">{{ v.min_age }}+</span>
+      {% elif v.age_restricted %}
+      <span class="video-restricted-badge">18+</span>
+      {% endif %}
+    </a>
+    <div class="video-info">
+      <div class="video-title" title="{{ v.title }}">{{ v.title }}</div>
+      <div class="video-meta">
+        <span>{{ v.filename }}</span>
+        <span>{{ v.size_bytes | human_size }}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align: center; color: var(--text-muted); padding: 48px 20px;">
+  No videos found in this folder.
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Audio{% endblock %}
+
+{% block content %}
+<div class="spotify-layout">
+
+  <!-- Left Sidebar (Spotify Library Style) -->
+  <aside class="spotify-sidebar">
+    <div class="spotify-nav-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+      </svg>
+      <span>Your Library</span>
+    </div>
+
+    <ul class="spotify-nav-list">
+      <li class="spotify-nav-item {% if not folder %}active{% endif %}">
+        <a href="{{ url_for('music') }}">
+          <span>All Tracks</span>
+        </a>
+      </li>
+      {% if subfolders %}
+        {% for sub in subfolders %}
+        <li class="spotify-nav-item {% if folder == sub.path %}active{% endif %}">
+          <a href="{{ url_for('music', folder=sub.path) }}">
+            <span>{{ sub.name }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      {% endif %}
+    </ul>
+
+    {% if is_admin %}
+    <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+      <a href="{{ url_for('admin_panel', tab='upload') }}" class="btn btn-sm btn-primary" style="width: 100%;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Upload Tracks</span>
+      </a>
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- Main Spotify Panel -->
+  <div class="spotify-main">
+
+    <!-- Hero / Album Header -->
+    <div class="spotify-hero">
+      <div class="spotify-hero-art">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+      </div>
+      <div class="spotify-hero-info">
+        <div class="spotify-hero-tag">Playlist</div>
+        <h1 class="spotify-hero-title">{{ folder or 'Audio Library' }}</h1>
+        <div class="spotify-hero-meta">
+          <span>{{ tracks | length }} tracks</span>
+          <span>&bull;</span>
+          <span>Direct Audio Stream</span>
+        </div>
+      </div>
+      {% if tracks %}
+      <button type="button" class="spotify-play-hero-btn" id="heroPlayAllBtn" title="Play All">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- Filter input -->
+    <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
+      <div class="drive-search-box" style="max-width: 300px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="musicSearchInput" class="drive-search-input" placeholder="Search in tracks...">
+      </div>
+    </div>
+
+    <!-- Spotify Tracklist Table -->
+    <div class="spotify-tracklist-card">
+      {% if tracks %}
+      <div class="spotify-table-header">
+        <span style="width: 36px;">#</span>
+        <span style="flex: 1;">Title</span>
+        <span class="spotify-track-album">Album / Folder</span>
+        <span class="spotify-track-size">Size</span>
+        <span class="spotify-track-actions"></span>
+      </div>
+
+      <div id="spotifyTrackContainer">
+        {% for track in tracks %}
+        <div class="spotify-track-row"
+             data-track-index="{{ loop.index0 }}"
+             data-track-id="{{ track.id }}"
+             data-track-title="{{ track.title }}"
+             data-track-folder="{{ track.folder or 'Root' }}"
+             data-track-stream="{{ url_for('stream', media_id=track.id) }}">
+          
+          <div class="spotify-track-num">
+            <span class="num-text">{{ loop.index }}</span>
+            <svg class="play-hover-icon" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </div>
+
+          <div class="spotify-track-details">
+            <div class="spotify-track-title">{{ track.title }}</div>
+            <div class="spotify-track-sub">{{ track.filename }}</div>
+          </div>
+
+          <div class="spotify-track-album">
+            {{ track.folder or 'Root' }}
+          </div>
+
+          <div class="spotify-track-size">
+            {{ track.size_bytes | human_size }}
+          </div>
+
+          <div class="spotify-track-actions">
+            <a href="{{ url_for('download', media_id=track.id) }}"
+               class="btn btn-sm btn-icon"
+               download
+               onclick="event.stopPropagation();"
+               title="Download audio file">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align: center; color: var(--text-muted); padding: 48px 20px;">
+        No audio tracks found in this directory.
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Fixed Bottom Spotify Audio Player -->
+<div class="spotify-player-bar" id="spotifyPlayerBar">
+  <audio id="musicAudioElement" preload="metadata"></audio>
+
+  <!-- Left: Currently Playing Track Info -->
+  <div class="spotify-player-left">
+    <div class="spotify-player-art">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+      </svg>
+    </div>
+    <div class="spotify-player-info">
+      <div class="spotify-player-title" id="musicTrackTitle">Select a track to play</div>
+      <div class="spotify-player-sub" id="musicTrackFolder">{{ folder or 'All Tracks' }}</div>
+    </div>
+  </div>
+
+  <!-- Center: Controls & Scrubber -->
+  <div class="spotify-player-center">
+    <div class="spotify-controls-row">
+      <button type="button" class="spotify-ctrl-btn" id="musicPrevBtn" title="Previous Track">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="19 20 9 12 19 4 19 20"></polygon>
+          <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line>
+        </svg>
+      </button>
+
+      <button type="button" class="spotify-ctrl-btn spotify-play-btn" id="musicPlayBtn" title="Play / Pause">
+        <svg id="musicPlayIcon" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="6 4 20 12 6 20 6 4"></polygon>
+        </svg>
+      </button>
+
+      <button type="button" class="spotify-ctrl-btn" id="musicNextBtn" title="Next Track">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 4 15 12 5 20 5 4"></polygon>
+          <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="spotify-scrubber-row">
+      <span id="musicCurrentTime">0:00</span>
+      <input type="range" id="musicSeekScrubber" class="spotify-scrubber" value="0" min="0" max="100" step="0.1">
+      <span id="musicDuration">0:00</span>
+    </div>
+  </div>
+
+  <!-- Right: Volume Slider -->
+  <div class="spotify-player-right">
+    <div class="spotify-vol-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+      <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.85" title="Volume">
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Vanilla JS: Spotify Sequential Audio Playback Engine
+  (function() {
+    const audio = document.getElementById('musicAudioElement');
+    const playBtn = document.getElementById('musicPlayBtn');
+    const playIcon = document.getElementById('musicPlayIcon');
+    const prevBtn = document.getElementById('musicPrevBtn');
+    const nextBtn = document.getElementById('musicNextBtn');
+    const seekScrubber = document.getElementById('musicSeekScrubber');
+    const currentTimeEl = document.getElementById('musicCurrentTime');
+    const durationEl = document.getElementById('musicDuration');
+    const volumeSlider = document.getElementById('musicVolumeSlider');
+    const titleEl = document.getElementById('musicTrackTitle');
+    const folderEl = document.getElementById('musicTrackFolder');
+    const heroPlayAllBtn = document.getElementById('heroPlayAllBtn');
+    const searchInput = document.getElementById('musicSearchInput');
+    const rows = Array.from(document.querySelectorAll('.spotify-track-row'));
+
+    let currentIndex = -1;
+
+    const playSvg = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
+    const pauseSvg = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+
+    function formatTime(secs) {
+      if (isNaN(secs)) return '0:00';
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function loadTrack(index, autoPlay = true) {
+      if (index < 0 || index >= rows.length) return;
+      currentIndex = index;
+      const row = rows[index];
+
+      rows.forEach(r => r.classList.remove('active'));
+      row.classList.add('active');
+
+      const streamUrl = row.getAttribute('data-track-stream');
+      const title = row.getAttribute('data-track-title');
+      const folder = row.getAttribute('data-track-folder');
+
+      titleEl.textContent = title;
+      folderEl.textContent = folder;
+      audio.src = streamUrl;
+
+      if (autoPlay) {
+        audio.play().then(() => {
+          playIcon.innerHTML = pauseSvg;
+        }).catch(() => {
+          playIcon.innerHTML = playSvg;
+        });
+      }
+    }
+
+    rows.forEach((row, idx) => {
+      row.addEventListener('click', () => loadTrack(idx, true));
+    });
+
+    if (heroPlayAllBtn && rows.length > 0) {
+      heroPlayAllBtn.addEventListener('click', () => loadTrack(0, true));
+    }
+
+    if (playBtn) {
+      playBtn.addEventListener('click', () => {
+        if (!audio.src) {
+          if (rows.length > 0) loadTrack(0, true);
+          return;
+        }
+        if (audio.paused) {
+          audio.play();
+          playIcon.innerHTML = pauseSvg;
+        } else {
+          audio.pause();
+          playIcon.innerHTML = playSvg;
+        }
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (rows.length === 0) return;
+        const newIdx = (currentIndex - 1 + rows.length) % rows.length;
+        loadTrack(newIdx, true);
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (rows.length === 0) return;
+        const newIdx = (currentIndex + 1) % rows.length;
+        loadTrack(newIdx, true);
+      });
+    }
+
+    // Auto-advance sequentially on track completion
+    audio.addEventListener('ended', () => {
+      if (rows.length === 0) return;
+      const nextIdx = currentIndex + 1;
+      if (nextIdx < rows.length) {
+        loadTrack(nextIdx, true);
+      } else {
+        loadTrack(0, true);
+      }
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      if (!isNaN(audio.duration) && audio.duration > 0) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        seekScrubber.value = pct;
+        currentTimeEl.textContent = formatTime(audio.currentTime);
+        durationEl.textContent = formatTime(audio.duration);
+      }
+    });
+
+    seekScrubber.addEventListener('input', () => {
+      if (!isNaN(audio.duration)) {
+        audio.currentTime = (seekScrubber.value / 100) * audio.duration;
+      }
+    });
+
+    volumeSlider.addEventListener('input', () => {
+      audio.volume = volumeSlider.value;
+    });
+
+    // Instant filter on tracks
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        rows.forEach(r => {
+          const t = (r.getAttribute('data-track-title') || '').toLowerCase();
+          const f = (r.getAttribute('data-track-folder') || '').toLowerCase();
+          const match = t.includes(query) || f.includes(query);
+          r.style.display = match ? '' : 'none';
+        });
+      });
+    }
+  })();
+</script>
+{% endblock %}
