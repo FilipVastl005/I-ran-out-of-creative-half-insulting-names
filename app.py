@@ -518,7 +518,7 @@ def watch(media_id):
     prev_id = ids[idx - 1] if idx > 0 else None
     next_id = ids[idx + 1] if 0 <= idx < len(ids) - 1 else None
     return render_template("watch.html", media=media, prev_id=prev_id, next_id=next_id,
-                           crumbs=breadcrumbs(media["folder"]))
+                           siblings=siblings, crumbs=breadcrumbs(media["folder"]))
 
 
 @app.route("/music")

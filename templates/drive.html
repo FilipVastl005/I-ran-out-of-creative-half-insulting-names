@@ -419,17 +419,17 @@
 
 {# Upload progress banner #}
 <div id="uploadBanner" style="display:none;position:fixed;bottom:28px;right:28px;z-index:9999;
-     background:var(--card-bg);border:1px solid var(--border);border-radius:14px;
-     padding:16px 20px;box-shadow:0 10px 40px rgba(0,0,0,0.5);min-width:280px;max-width:380px;">
+     background:#ffffff;border:1px solid #dadce0;border-radius:14px;
+     padding:16px 20px;box-shadow:0 8px 30px rgba(0,0,0,0.15);min-width:280px;max-width:380px;">
   <div style="display:flex;align-items:center;gap:12px;">
-    <div id="uploadSpinner" style="width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:driveSpinAnim 0.7s linear infinite;flex-shrink:0;"></div>
+    <div id="uploadSpinner" style="width:22px;height:22px;border:2px solid #e5e7eb;border-top-color:var(--accent-blue,#1a73e8);border-radius:50%;animation:driveSpinAnim 0.7s linear infinite;flex-shrink:0;"></div>
     <div>
-      <div style="font-size:13px;font-weight:600;color:var(--text-primary);" id="uploadLabel">Uploading…</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="uploadSub"></div>
+      <div style="font-size:13px;font-weight:600;color:var(--text-main,#111827);" id="uploadLabel">Uploading…</div>
+      <div style="font-size:11px;color:var(--text-muted,#6b7280);margin-top:2px;" id="uploadSub"></div>
     </div>
   </div>
-  <div style="margin-top:12px;height:4px;background:var(--border);border-radius:3px;overflow:hidden;">
-    <div id="uploadBar" style="height:100%;background:var(--accent);width:0%;transition:width 0.25s ease;border-radius:3px;"></div>
+  <div style="margin-top:12px;height:4px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
+    <div id="uploadBar" style="height:100%;background:var(--accent-blue,#1a73e8);width:0%;transition:width 0.25s ease;border-radius:3px;"></div>
   </div>
 </div>
 
@@ -489,47 +489,44 @@
 /* ---- Dropdown ---- */
 .drive-new-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 6px);
   left: 0;
   width: 220px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.55);
-  z-index: 500;
+  background: #ffffff !important;
+  border: 1px solid var(--border-medium, #d1d5db);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 1200;
+  padding: 6px 0;
   overflow: hidden;
   display: none;          /* toggled by JS */
-  animation: ddFadeIn 0.15s ease;
-}
-@keyframes ddFadeIn {
-  from { opacity:0; transform:translateY(-6px) scale(0.97); }
-  to   { opacity:1; transform:translateY(0) scale(1); }
 }
 .dd-section-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 10px 14px 4px;
+  color: #5f6368;
+  padding: 8px 16px 4px;
 }
 .dd-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 9px 14px;
+  padding: 10px 16px;
   background: transparent;
   border: none;
-  color: var(--text-primary);
-  font-size: 13.5px;
+  color: #1f1f1f;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   text-align: left;
-  transition: background 0.12s;
+  transition: background 0.12s, color 0.12s;
 }
-.dd-item svg { width:15px;height:15px;flex-shrink:0;color:var(--text-secondary); }
-.dd-item:hover { background: rgba(255,255,255,0.06); }
-.dd-divider { height:1px; background:var(--border); margin:4px 0; }
+.dd-item svg { width:18px;height:18px;flex-shrink:0;color:#444746; }
+.dd-item:hover { background: #f1f3f4; color: #1f1f1f; }
+.dd-divider { height:1px; background:#e8eaed; margin:6px 0; }
 
 /* ---- Drop-zone ---- */
 .drive-dropzone {
@@ -565,101 +562,91 @@
 /* ---- Context menus ---- */
 .ctx-menu {
   position: fixed;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 10px 36px rgba(0,0,0,0.55);
+  background: #ffffff !important;
+  border: 1px solid var(--border-medium, #d1d5db);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   z-index: 2000;
   min-width: 200px;
-  padding: 5px 0;
+  padding: 6px 0;
   list-style: none;
   margin: 0;
   display: none;      /* shown by JS */
-  animation: ctxIn 0.12s ease;
-}
-@keyframes ctxIn {
-  from { opacity:0; transform:scale(0.95); }
-  to   { opacity:1; transform:scale(1); }
 }
 .ctx-menu.ctx-open { display: block; }
 .ctx-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 16px;
+  padding: 8px 16px;
   font-size: 13.5px;
-  color: var(--text-primary);
+  color: #1f1f1f;
   cursor: pointer;
   transition: background 0.1s;
   white-space: nowrap;
 }
-.ctx-item svg { width:14px;height:14px;flex-shrink:0;color:var(--text-secondary); }
-.ctx-item:hover { background: rgba(255,255,255,0.07); }
-.ctx-item-danger { color: var(--danger, #ef4444); }
-.ctx-item-danger svg { color: var(--danger, #ef4444); }
-.ctx-item-danger:hover { background: rgba(239,68,68,0.12); }
-.ctx-item-name { font-weight:600; font-size:12px !important; padding-bottom:2px !important; }
-.ctx-divider { height:1px; background:var(--border); margin:4px 0; }
+.ctx-item svg { width:16px;height:16px;flex-shrink:0;color:#5f6368; }
+.ctx-item:hover { background: #f1f3f4; color: #111827; }
+.ctx-item-danger { color: #d93025; }
+.ctx-item-danger svg { color: #d93025; }
+.ctx-item-danger:hover { background: #fce8e6; color: #c5221f; }
+.ctx-item-name { font-weight:600; font-size:12px !important; padding-bottom:2px !important; color:#5f6368; }
+.ctx-divider { height:1px; background:#e8eaed; margin:4px 0; }
 
 /* ---- Modals ---- */
 .drive-modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.65);
+  background: rgba(0,0,0,0.4);
   z-index: 3000;
   display: flex; align-items: center; justify-content: center;
-  animation: backdropIn 0.18s ease;
 }
-@keyframes backdropIn { from{opacity:0;} to{opacity:1;} }
 .drive-modal {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  background: #ffffff !important;
+  border: 1px solid var(--border-medium, #d1d5db);
+  border-radius: var(--radius-md, 8px);
   width: 440px; max-width: 95vw;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   overflow: hidden;
-  animation: modalIn 0.2s cubic-bezier(.34,1.4,.64,1);
-}
-@keyframes modalIn {
-  from { opacity:0; transform:scale(0.88) translateY(20px); }
-  to   { opacity:1; transform:scale(1) translateY(0); }
 }
 .drive-modal-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 18px 22px 14px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #e8eaed;
 }
-.drive-modal-header h3 { margin:0; font-size:16px; font-weight:600; }
+.drive-modal-header h3 { margin:0; font-size:16px; font-weight:600; color:#1f1f1f; }
 .drive-modal-close {
-  background:none; border:none; color:var(--text-muted);
+  background:none; border:none; color:#5f6368;
   font-size:22px; cursor:pointer; line-height:1; padding:0 4px;
   transition:color 0.15s; border-radius:4px;
 }
-.drive-modal-close:hover { color:var(--text-primary); background:rgba(255,255,255,.08); }
+.drive-modal-close:hover { color:#111827; background:#f1f3f4; }
 .drive-modal-body { padding:20px 22px; }
-.drive-modal-label { display:block; font-size:12px; color:var(--text-secondary); margin-bottom:8px; font-weight:500; }
+.drive-modal-label { display:block; font-size:12px; color:#444746; margin-bottom:8px; font-weight:500; }
 .drive-modal-input {
   width:100%; padding:10px 14px;
-  background:var(--glass-bg);
-  border:1px solid var(--border);
-  border-radius:9px; color:var(--text-primary);
+  background:#ffffff;
+  border:1px solid #dadce0;
+  border-radius:8px; color:#1f1f1f;
   font-size:14px; outline:none;
   transition:border-color 0.2s, box-shadow 0.2s;
   box-sizing:border-box;
 }
 .drive-modal-input:focus {
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(99,102,241,.2);
+  border-color:#1a73e8;
+  box-shadow:0 0 0 3px rgba(26,115,232,.18);
 }
 .drive-modal-footer {
   display:flex; justify-content:flex-end; gap:10px;
   padding:14px 22px 18px;
+  border-top: 1px solid #e8eaed;
+  background: #f8f9fa;
 }
 .drive-modal-cancel {
-  background:none; border:none; color:var(--text-muted);
+  background:none; border:none; color:#5f6368;
   cursor:pointer; font-size:13px; padding:7px 12px; border-radius:7px;
   transition:background 0.15s;
 }
-.drive-modal-cancel:hover { background:rgba(255,255,255,.07); color:var(--text-primary); }
+.drive-modal-cancel:hover { background:#e8eaed; color:#1f1f1f; }
 
 @keyframes driveSpinAnim { to { transform:rotate(360deg); } }
 </style>

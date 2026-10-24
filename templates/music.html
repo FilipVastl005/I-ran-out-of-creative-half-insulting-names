@@ -1,360 +1,918 @@
 {% extends "base.html" %}
 
-{% block title %}Audio{% endblock %}
+{% block title %}Audio — {{ folder or 'Library' }}{% endblock %}
 
 {% block content %}
-<div class="spotify-layout">
+<div class="audio-layout">
 
-  <!-- Left Sidebar (Spotify Library Style) -->
-  <aside class="spotify-sidebar">
-    <div class="spotify-nav-header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  {# ---- LEFT SIDEBAR: PLAYLISTS & FOLDERS ---- #}
+  <aside class="audio-sidebar">
+    <div class="sidebar-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
         <path d="M9 18V5l12-2v13"></path>
         <circle cx="6" cy="18" r="3"></circle>
         <circle cx="18" cy="16" r="3"></circle>
       </svg>
-      <span>Your Library</span>
+      <span>Audio Library</span>
     </div>
 
-    <ul class="spotify-nav-list">
-      <li class="spotify-nav-item {% if not folder %}active{% endif %}">
-        <a href="{{ url_for('music') }}">
-          <span>All Tracks</span>
-        </a>
-      </li>
+    {# Search in library #}
+    <div class="sidebar-search">
+      <input type="text" id="libSearchInput" placeholder="Filter playlists..." autocomplete="off">
+    </div>
+
+    {# Playlists & Subfolders #}
+    <div class="sidebar-nav" id="libFolderList">
+      <a href="{{ url_for('music') }}" class="sidebar-item {% if not folder %}active{% endif %}" data-name="all tracks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="10 8 16 12 10 16 10 8"></polygon>
+        </svg>
+        <span>All Tracks</span>
+      </a>
+
       {% if subfolders %}
         {% for sub in subfolders %}
-        <li class="spotify-nav-item {% if folder == sub.path %}active{% endif %}">
-          <a href="{{ url_for('music', folder=sub.path) }}">
-            <span>{{ sub.name }}</span>
-          </a>
-        </li>
+        <a href="{{ url_for('music', folder=sub.path) }}" class="sidebar-item {% if folder == sub.path %}active{% endif %}" data-name="{{ sub.name | lower }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px;">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>{{ sub.name }}</span>
+        </a>
         {% endfor %}
       {% endif %}
-    </ul>
+    </div>
 
     {% if is_admin %}
-    <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+    <div style="margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
       <a href="{{ url_for('admin_panel', tab='upload') }}" class="btn btn-sm btn-primary" style="width: 100%;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 13px; height: 13px;">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Upload Tracks</span>
+        <span>Upload Audio</span>
       </a>
     </div>
     {% endif %}
   </aside>
 
-  <!-- Main Spotify Panel -->
-  <div class="spotify-main">
+  {# ---- MAIN AUDIO PANEL ---- #}
+  <div class="audio-main">
 
-    <!-- Hero / Album Header -->
-    <div class="spotify-hero">
-      <div class="spotify-hero-art">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18V5l12-2v13"></path>
-          <circle cx="6" cy="18" r="3"></circle>
-          <circle cx="18" cy="16" r="3"></circle>
-        </svg>
-      </div>
-      <div class="spotify-hero-info">
-        <div class="spotify-hero-tag">Playlist</div>
-        <h1 class="spotify-hero-title">{{ folder or 'Audio Library' }}</h1>
-        <div class="spotify-hero-meta">
-          <span>{{ tracks | length }} tracks</span>
+    {# Playlist Header Card #}
+    <div class="playlist-card">
+      <div class="playlist-info">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">Playlist</div>
+        <h1 style="font-size: 22px; font-weight: 700; color: var(--text-main); margin: 2px 0 6px;">{{ folder or 'All Audio Tracks' }}</h1>
+        <div style="font-size: 13px; color: var(--text-muted); display: flex; gap: 8px; align-items: center;">
+          <span id="trackCountLabel">{{ tracks | length }} tracks</span>
           <span>&bull;</span>
           <span>Direct Audio Stream</span>
         </div>
       </div>
-      {% if tracks %}
-      <button type="button" class="spotify-play-hero-btn" id="heroPlayAllBtn" title="Play All">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-      </button>
-      {% endif %}
+
+      <div style="display: flex; gap: 8px; align-items: center;">
+        {% if tracks %}
+        <button type="button" class="btn btn-primary" id="heroPlayAllBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="heroPlayText">Play All</span>
+        </button>
+        <button type="button" class="btn" id="heroShuffleBtn" title="Toggle Shuffle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <line x1="4" y1="20" x2="21" y2="3"></line>
+            <polyline points="21 16 21 21 16 21"></polyline>
+            <line x1="15" y1="15" x2="21" y2="21"></line>
+            <line x1="4" y1="4" x2="9" y2="9"></line>
+          </svg>
+          <span>Shuffle</span>
+        </button>
+        {% endif %}
+      </div>
     </div>
 
-    <!-- Filter input -->
-    <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
-      <div class="drive-search-box" style="max-width: 300px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    {# Search & Filter Bar #}
+    <div class="track-filter-bar">
+      <div class="track-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" id="musicSearchInput" class="drive-search-input" placeholder="Search in tracks...">
+        <input type="text" id="musicSearchInput" placeholder="Filter tracks in playlist..." autocomplete="off">
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <select id="trackSortSelect" class="simple-select" title="Sort tracks">
+          <option value="default">Sort: Default</option>
+          <option value="title">Title (A &rarr; Z)</option>
+          <option value="album">Folder / Album</option>
+          <option value="size">File Size</option>
+        </select>
       </div>
     </div>
 
-    <!-- Spotify Tracklist Table -->
-    <div class="spotify-tracklist-card">
-      {% if tracks %}
-      <div class="spotify-table-header">
-        <span style="width: 36px;">#</span>
+    {# Tracklist Table #}
+    <div class="track-table-card">
+      <div class="track-table-head">
+        <span style="width: 38px;">#</span>
         <span style="flex: 1;">Title</span>
-        <span class="spotify-track-album">Album / Folder</span>
-        <span class="spotify-track-size">Size</span>
-        <span class="spotify-track-actions"></span>
+        <span class="col-album">Album / Folder</span>
+        <span class="col-format">Format</span>
+        <span style="width: 100px; text-align: right;">Size</span>
       </div>
 
       <div id="spotifyTrackContainer">
-        {% for track in tracks %}
-        <div class="spotify-track-row"
-             data-track-index="{{ loop.index0 }}"
-             data-track-id="{{ track.id }}"
-             data-track-title="{{ track.title }}"
-             data-track-folder="{{ track.folder or 'Root' }}"
-             data-track-stream="{{ url_for('stream', media_id=track.id) }}">
-          
-          <div class="spotify-track-num">
-            <span class="num-text">{{ loop.index }}</span>
-            <svg class="play-hover-icon" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-          </div>
+        {% if tracks %}
+          {% for track in tracks %}
+          <div class="track-row"
+               data-track-index="{{ loop.index0 }}"
+               data-track-id="{{ track.id }}"
+               data-track-title="{{ track.title }}"
+               data-track-folder="{{ track.folder or 'Library Root' }}"
+               data-track-size="{{ track.size_bytes }}"
+               data-track-stream="{{ url_for('stream', media_id=track.id) }}"
+               data-track-download="{{ url_for('download', media_id=track.id) }}">
 
-          <div class="spotify-track-details">
-            <div class="spotify-track-title">{{ track.title }}</div>
-            <div class="spotify-track-sub">{{ track.filename }}</div>
-          </div>
-
-          <div class="spotify-track-album">
-            {{ track.folder or 'Root' }}
-          </div>
-
-          <div class="spotify-track-size">
-            {{ track.size_bytes | human_size }}
-          </div>
-
-          <div class="spotify-track-actions">
-            <a href="{{ url_for('download', media_id=track.id) }}"
-               class="btn btn-sm btn-icon"
-               download
-               onclick="event.stopPropagation();"
-               title="Download audio file">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
+            <div class="track-num-cell">
+              <span class="track-index">{{ loop.index }}</span>
+              <svg class="track-play-icon" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
               </svg>
-            </a>
+            </div>
+
+            <div class="track-title-cell">
+              <div class="track-title-main">{{ track.title }}</div>
+              <div class="track-title-sub">{{ track.filename }}</div>
+            </div>
+
+            <div class="col-album track-album-cell">
+              {{ track.folder or 'Root' }}
+            </div>
+
+            <div class="col-format track-format-cell">
+              <span class="badge-format">{{ track.mime_type.split('/')[-1].upper() if '/' in track.mime_type else 'AUDIO' }}</span>
+            </div>
+
+            <div class="track-actions-cell">
+              <a href="{{ url_for('download', media_id=track.id) }}"
+                 class="btn btn-sm btn-icon"
+                 download
+                 onclick="event.stopPropagation();"
+                 title="Download track">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 13px; height: 13px;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </a>
+              <span class="track-size">{{ track.size_bytes | human_size }}</span>
+            </div>
+
           </div>
-        </div>
-        {% endfor %}
+          {% endfor %}
+        {% else %}
+          <div style="text-align: center; color: var(--text-muted); padding: 48px 20px;">
+            No audio tracks found in this directory.
+          </div>
+        {% endif %}
       </div>
-      {% else %}
-      <div style="text-align: center; color: var(--text-muted); padding: 48px 20px;">
-        No audio tracks found in this directory.
-      </div>
-      {% endif %}
     </div>
 
   </div>
 
 </div>
 
-<!-- Fixed Bottom Spotify Audio Player -->
-<div class="spotify-player-bar" id="spotifyPlayerBar">
+{# ---- FIXED BOTTOM AUDIO PLAYER BAR ---- #}
+<div class="simple-player-bar" id="spotifyPlayerBar">
   <audio id="musicAudioElement" preload="metadata"></audio>
 
-  <!-- Left: Currently Playing Track Info -->
-  <div class="spotify-player-left">
-    <div class="spotify-player-art">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  {# Left: Track info #}
+  <div class="player-left">
+    <div class="player-icon-box">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px; color: var(--accent-blue);">
         <path d="M9 18V5l12-2v13"></path>
         <circle cx="6" cy="18" r="3"></circle>
         <circle cx="18" cy="16" r="3"></circle>
       </svg>
     </div>
-    <div class="spotify-player-info">
-      <div class="spotify-player-title" id="musicTrackTitle">Select a track to play</div>
-      <div class="spotify-player-sub" id="musicTrackFolder">{{ folder or 'All Tracks' }}</div>
+    <div class="player-meta-box">
+      <div class="player-now-title" id="playerTitle">Select a track to play</div>
+      <div class="player-now-folder" id="playerArtist">{{ folder or 'All Tracks' }}</div>
     </div>
   </div>
 
-  <!-- Center: Controls & Scrubber -->
-  <div class="spotify-player-center">
-    <div class="spotify-controls-row">
-      <button type="button" class="spotify-ctrl-btn" id="musicPrevBtn" title="Previous Track">
-        <svg viewBox="0 0 24 24" fill="currentColor">
+  {# Center: Controls & Timeline #}
+  <div class="player-center">
+    <div class="player-buttons">
+      <button type="button" class="btn-ctrl" id="spShuffleBtn" title="Shuffle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+          <polyline points="16 3 21 3 21 8"></polyline>
+          <line x1="4" y1="20" x2="21" y2="3"></line>
+          <polyline points="21 16 21 21 16 21"></polyline>
+          <line x1="15" y1="15" x2="21" y2="21"></line>
+          <line x1="4" y1="4" x2="9" y2="9"></line>
+        </svg>
+      </button>
+
+      <button type="button" class="btn-ctrl" id="spPrevBtn" title="Previous Track">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;">
           <polygon points="19 20 9 12 19 4 19 20"></polygon>
           <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line>
         </svg>
       </button>
 
-      <button type="button" class="spotify-ctrl-btn spotify-play-btn" id="musicPlayBtn" title="Play / Pause">
-        <svg id="musicPlayIcon" viewBox="0 0 24 24" fill="currentColor">
+      <button type="button" class="btn-play-circle" id="spPlayBtn" title="Play / Pause">
+        <svg id="spPlayIcon" viewBox="0 0 24 24" fill="currentColor" style="width: 15px; height: 15px; margin-left: 2px;">
           <polygon points="6 4 20 12 6 20 6 4"></polygon>
         </svg>
       </button>
 
-      <button type="button" class="spotify-ctrl-btn" id="musicNextBtn" title="Next Track">
-        <svg viewBox="0 0 24 24" fill="currentColor">
+      <button type="button" class="btn-ctrl" id="spNextBtn" title="Next Track">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;">
           <polygon points="5 4 15 12 5 20 5 4"></polygon>
           <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
         </svg>
       </button>
+
+      <button type="button" class="btn-ctrl" id="spRepeatBtn" title="Repeat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+          <polyline points="17 1 21 5 17 9"></polyline>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+          <polyline points="7 23 3 19 7 15"></polyline>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+        </svg>
+      </button>
     </div>
 
-    <div class="spotify-scrubber-row">
-      <span id="musicCurrentTime">0:00</span>
-      <input type="range" id="musicSeekScrubber" class="spotify-scrubber" value="0" min="0" max="100" step="0.1">
-      <span id="musicDuration">0:00</span>
+    <div class="player-timeline">
+      <span class="time-label" id="spCurrentTime">0:00</span>
+      <input type="range" id="spSeekScrubber" class="simple-scrubber" value="0" min="0" max="100" step="0.1">
+      <span class="time-label" id="spDuration">0:00</span>
     </div>
   </div>
 
-  <!-- Right: Volume Slider -->
-  <div class="spotify-player-right">
-    <div class="spotify-vol-row">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+  {# Right: Volume & Download #}
+  <div class="player-right">
+    <a href="#" id="playerDownloadBtn" class="btn btn-sm btn-icon" download title="Download current track" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 13px; height: 13px;">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
       </svg>
-      <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.85" title="Volume">
+    </a>
+
+    <div class="volume-box">
+      <button type="button" class="btn-icon" id="spMuteBtn" style="border:none;background:none;cursor:pointer;padding:0;">
+        <svg id="spVolIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: var(--text-muted);">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+      </button>
+      <input type="range" id="spVolumeSlider" min="0" max="1" step="0.05" value="0.85" title="Volume">
     </div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<style>
+/* ================================================================
+   CLEAN, SIMPLE, NO-EFFECTS AUDIO INTERFACE
+================================================================ */
+.audio-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding-bottom: 90px;
+}
+@media (max-width: 900px) {
+  .audio-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Sidebar */
+.audio-sidebar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sidebar-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-search input {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  outline: none;
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background 0.1s;
+}
+.sidebar-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+.sidebar-item.active {
+  background: var(--accent-blue-subtle);
+  color: var(--accent-blue-text);
+  font-weight: 600;
+}
+
+/* Main Area */
+.audio-main {
+  min-width: 0;
+}
+.playlist-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+/* Filter Bar */
+.track-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.track-search-wrap {
+  position: relative;
+  width: 260px;
+}
+.track-search-wrap svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+.track-search-wrap input {
+  width: 100%;
+  padding: 6px 10px 6px 30px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  font-size: 13px;
+  outline: none;
+}
+
+/* Tracklist Table */
+.track-table-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.track-table-head {
+  display: flex;
+  align-items: center;
+  padding: 9px 16px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.col-album { width: 180px; }
+.col-format { width: 90px; }
+@media (max-width: 768px) {
+  .col-album, .col-format { display: none; }
+}
+
+.track-row {
+  display: flex;
+  align-items: center;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.track-row:last-child {
+  border-bottom: none;
+}
+.track-row:hover {
+  background: var(--bg-hover);
+}
+.track-row.active {
+  background: var(--accent-blue-subtle);
+}
+.track-row.active .track-title-main {
+  color: var(--accent-blue-text);
+  font-weight: 600;
+}
+
+.track-num-cell {
+  width: 38px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+}
+.track-play-icon {
+  display: none;
+  width: 13px;
+  height: 13px;
+  color: var(--accent-blue);
+}
+.track-row:hover .track-index { display: none; }
+.track-row:hover .track-play-icon { display: block; }
+
+.track-title-cell {
+  flex: 1;
+  min-width: 0;
+  padding-right: 14px;
+}
+.track-title-main {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.track-title-sub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.track-album-cell {
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12px;
+}
+.badge-format {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 5px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+}
+.track-actions-cell {
+  width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.track-size {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Bottom Player Bar */
+.simple-player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-medium);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 1000;
+}
+.player-left {
+  width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.player-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.player-meta-box { min-width: 0; }
+.player-now-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.player-now-folder {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.player-center {
+  flex: 1;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.player-buttons {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.btn-ctrl {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-ctrl:hover { color: var(--text-main); }
+.btn-ctrl.active { color: var(--accent-blue); }
+
+.btn-play-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.btn-play-circle:hover { background: var(--accent-blue-hover); }
+
+.player-timeline {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.time-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  width: 32px;
+  text-align: center;
+}
+.simple-scrubber {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--border-medium);
+  border-radius: 2px;
+  outline: none;
+}
+.simple-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  cursor: pointer;
+}
+
+.player-right {
+  width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.volume-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.volume-box input[type=range] {
+  width: 70px;
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--border-medium);
+  border-radius: 2px;
+  outline: none;
+}
+.volume-box input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  cursor: pointer;
+}
+</style>
+
 <script>
-  // Vanilla JS: Spotify Sequential Audio Playback Engine
-  (function() {
-    const audio = document.getElementById('musicAudioElement');
-    const playBtn = document.getElementById('musicPlayBtn');
-    const playIcon = document.getElementById('musicPlayIcon');
-    const prevBtn = document.getElementById('musicPrevBtn');
-    const nextBtn = document.getElementById('musicNextBtn');
-    const seekScrubber = document.getElementById('musicSeekScrubber');
-    const currentTimeEl = document.getElementById('musicCurrentTime');
-    const durationEl = document.getElementById('musicDuration');
-    const volumeSlider = document.getElementById('musicVolumeSlider');
-    const titleEl = document.getElementById('musicTrackTitle');
-    const folderEl = document.getElementById('musicTrackFolder');
-    const heroPlayAllBtn = document.getElementById('heroPlayAllBtn');
-    const searchInput = document.getElementById('musicSearchInput');
-    const rows = Array.from(document.querySelectorAll('.spotify-track-row'));
+(function() {
+  'use strict';
 
-    let currentIndex = -1;
+  const audio = document.getElementById('musicAudioElement');
+  if (!audio) return;
 
-    const playSvg = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
-    const pauseSvg = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+  const playBtn = document.getElementById('spPlayBtn');
+  const playIcon = document.getElementById('spPlayIcon');
+  const heroPlayBtn = document.getElementById('heroPlayAllBtn');
+  const heroPlayText = document.getElementById('heroPlayText');
+  const prevBtn = document.getElementById('spPrevBtn');
+  const nextBtn = document.getElementById('spNextBtn');
+  const shuffleBtn = document.getElementById('spShuffleBtn');
+  const heroShuffleBtn = document.getElementById('heroShuffleBtn');
+  const repeatBtn = document.getElementById('spRepeatBtn');
 
-    function formatTime(secs) {
-      if (isNaN(secs)) return '0:00';
-      const m = Math.floor(secs / 60);
-      const s = Math.floor(secs % 60);
-      return m + ':' + (s < 10 ? '0' : '') + s;
+  const seekScrubber = document.getElementById('spSeekScrubber');
+  const currentTimeEl = document.getElementById('spCurrentTime');
+  const durationEl = document.getElementById('spDuration');
+
+  const muteBtn = document.getElementById('spMuteBtn');
+  const volSlider = document.getElementById('spVolumeSlider');
+  const volIcon = document.getElementById('spVolIcon');
+
+  const playerTitle = document.getElementById('playerTitle');
+  const playerArtist = document.getElementById('playerArtist');
+  const playerDownload = document.getElementById('playerDownloadBtn');
+
+  const searchInput = document.getElementById('musicSearchInput');
+  const libSearchInput = document.getElementById('libSearchInput');
+  const sortSelect = document.getElementById('trackSortSelect');
+  const container = document.getElementById('spotifyTrackContainer');
+  const rows = Array.from(document.querySelectorAll('.track-row'));
+
+  let currentIndex = -1;
+  let isShuffle = false;
+  let isRepeat = false;
+  let isDraggingScrub = false;
+
+  const playSvg = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
+  const pauseSvg = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+
+  function formatTime(secs) {
+    if (isNaN(secs) || secs < 0) return '0:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function playTrack(idx) {
+    if (idx < 0 || idx >= rows.length) return;
+    currentIndex = idx;
+    const row = rows[currentIndex];
+    const stream = row.getAttribute('data-track-stream');
+    const title = row.getAttribute('data-track-title');
+    const folder = row.getAttribute('data-track-folder');
+    const downloadUrl = row.getAttribute('data-track-download');
+
+    audio.src = stream;
+    audio.play().catch(() => {});
+
+    if (playerTitle) playerTitle.textContent = title;
+    if (playerArtist) playerArtist.textContent = folder;
+    if (playerDownload) {
+      playerDownload.href = downloadUrl;
+      playerDownload.style.display = 'inline-flex';
     }
 
-    function loadTrack(index, autoPlay = true) {
-      if (index < 0 || index >= rows.length) return;
-      currentIndex = index;
-      const row = rows[index];
+    updateRowHighlight();
+  }
 
-      rows.forEach(r => r.classList.remove('active'));
-      row.classList.add('active');
-
-      const streamUrl = row.getAttribute('data-track-stream');
-      const title = row.getAttribute('data-track-title');
-      const folder = row.getAttribute('data-track-folder');
-
-      titleEl.textContent = title;
-      folderEl.textContent = folder;
-      audio.src = streamUrl;
-
-      if (autoPlay) {
-        audio.play().then(() => {
-          playIcon.innerHTML = pauseSvg;
-        }).catch(() => {
-          playIcon.innerHTML = playSvg;
-        });
-      }
-    }
-
-    rows.forEach((row, idx) => {
-      row.addEventListener('click', () => loadTrack(idx, true));
-    });
-
-    if (heroPlayAllBtn && rows.length > 0) {
-      heroPlayAllBtn.addEventListener('click', () => loadTrack(0, true));
-    }
-
-    if (playBtn) {
-      playBtn.addEventListener('click', () => {
-        if (!audio.src) {
-          if (rows.length > 0) loadTrack(0, true);
-          return;
-        }
-        if (audio.paused) {
-          audio.play();
-          playIcon.innerHTML = pauseSvg;
-        } else {
-          audio.pause();
-          playIcon.innerHTML = playSvg;
-        }
-      });
-    }
-
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (rows.length === 0) return;
-        const newIdx = (currentIndex - 1 + rows.length) % rows.length;
-        loadTrack(newIdx, true);
-      });
-    }
-
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        if (rows.length === 0) return;
-        const newIdx = (currentIndex + 1) % rows.length;
-        loadTrack(newIdx, true);
-      });
-    }
-
-    // Auto-advance sequentially on track completion
-    audio.addEventListener('ended', () => {
-      if (rows.length === 0) return;
-      const nextIdx = currentIndex + 1;
-      if (nextIdx < rows.length) {
-        loadTrack(nextIdx, true);
+  function updateRowHighlight() {
+    rows.forEach((r, i) => {
+      if (i === currentIndex) {
+        r.classList.add('active');
       } else {
-        loadTrack(0, true);
+        r.classList.remove('active');
       }
     });
+  }
 
-    audio.addEventListener('timeupdate', () => {
-      if (!isNaN(audio.duration) && audio.duration > 0) {
-        const pct = (audio.currentTime / audio.duration) * 100;
-        seekScrubber.value = pct;
-        currentTimeEl.textContent = formatTime(audio.currentTime);
-        durationEl.textContent = formatTime(audio.duration);
-      }
-    });
-
-    seekScrubber.addEventListener('input', () => {
-      if (!isNaN(audio.duration)) {
-        audio.currentTime = (seekScrubber.value / 100) * audio.duration;
-      }
-    });
-
-    volumeSlider.addEventListener('input', () => {
-      audio.volume = volumeSlider.value;
-    });
-
-    // Instant filter on tracks
-    if (searchInput) {
-      searchInput.addEventListener('input', function() {
-        const query = this.value.trim().toLowerCase();
-        rows.forEach(r => {
-          const t = (r.getAttribute('data-track-title') || '').toLowerCase();
-          const f = (r.getAttribute('data-track-folder') || '').toLowerCase();
-          const match = t.includes(query) || f.includes(query);
-          r.style.display = match ? '' : 'none';
-        });
-      });
+  function togglePlay() {
+    if (currentIndex === -1 && rows.length > 0) {
+      playTrack(0);
+      return;
     }
-  })();
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }
+
+  if (playBtn) playBtn.addEventListener('click', togglePlay);
+  if (heroPlayBtn) heroPlayBtn.addEventListener('click', togglePlay);
+
+  audio.addEventListener('play', () => {
+    if (playIcon) playIcon.innerHTML = pauseSvg;
+    if (heroPlayText) heroPlayText.textContent = 'Pause';
+  });
+  audio.addEventListener('pause', () => {
+    if (playIcon) playIcon.innerHTML = playSvg;
+    if (heroPlayText) heroPlayText.textContent = 'Play All';
+  });
+
+  rows.forEach((row, i) => {
+    row.addEventListener('click', () => {
+      if (currentIndex === i) togglePlay();
+      else playTrack(i);
+    });
+  });
+
+  function nextTrack() {
+    if (rows.length === 0) return;
+    if (isRepeat) {
+      audio.currentTime = 0;
+      audio.play();
+      return;
+    }
+    if (isShuffle) {
+      let rand = Math.floor(Math.random() * rows.length);
+      if (rows.length > 1 && rand === currentIndex) {
+        rand = (rand + 1) % rows.length;
+      }
+      playTrack(rand);
+    } else {
+      let next = currentIndex + 1;
+      if (next >= rows.length) next = 0;
+      playTrack(next);
+    }
+  }
+
+  function prevTrack() {
+    if (rows.length === 0) return;
+    if (audio.currentTime > 3) {
+      audio.currentTime = 0;
+      return;
+    }
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = rows.length - 1;
+    playTrack(prev);
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', nextTrack);
+  if (prevBtn) prevBtn.addEventListener('click', prevTrack);
+  audio.addEventListener('ended', nextTrack);
+
+  function toggleShuffle() {
+    isShuffle = !isShuffle;
+    if (shuffleBtn) shuffleBtn.classList.toggle('active', isShuffle);
+    if (heroShuffleBtn) heroShuffleBtn.classList.toggle('active', isShuffle);
+  }
+  if (shuffleBtn) shuffleBtn.addEventListener('click', toggleShuffle);
+  if (heroShuffleBtn) heroShuffleBtn.addEventListener('click', toggleShuffle);
+
+  if (repeatBtn) {
+    repeatBtn.addEventListener('click', () => {
+      isRepeat = !isRepeat;
+      repeatBtn.classList.toggle('active', isRepeat);
+    });
+  }
+
+  audio.addEventListener('timeupdate', () => {
+    if (isDraggingScrub) return;
+    const dur = audio.duration || 0;
+    const cur = audio.currentTime || 0;
+    if (dur > 0 && seekScrubber) {
+      seekScrubber.value = (cur / dur) * 100;
+    }
+    if (currentTimeEl) currentTimeEl.textContent = formatTime(cur);
+  });
+
+  audio.addEventListener('loadedmetadata', () => {
+    if (durationEl) durationEl.textContent = formatTime(audio.duration || 0);
+  });
+
+  if (seekScrubber) {
+    seekScrubber.addEventListener('input', () => {
+      isDraggingScrub = true;
+      const dur = audio.duration || 0;
+      if (dur > 0) {
+        const val = parseFloat(seekScrubber.value);
+        if (currentTimeEl) currentTimeEl.textContent = formatTime((val / 100) * dur);
+      }
+    });
+    seekScrubber.addEventListener('change', () => {
+      isDraggingScrub = false;
+      const dur = audio.duration || 0;
+      if (dur > 0) {
+        audio.currentTime = (parseFloat(seekScrubber.value) / 100) * dur;
+      }
+    });
+  }
+
+  // Volume
+  if (volSlider) {
+    volSlider.addEventListener('input', (e) => {
+      audio.volume = parseFloat(e.target.value);
+      audio.muted = (audio.volume === 0);
+    });
+  }
+  if (muteBtn) {
+    muteBtn.addEventListener('click', () => {
+      audio.muted = !audio.muted;
+      if (volSlider) volSlider.value = audio.muted ? 0 : audio.volume;
+    });
+  }
+
+  // Search in playlist
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim().toLowerCase();
+      rows.forEach(r => {
+        const t = (r.getAttribute('data-track-title') || '').toLowerCase();
+        const f = (r.getAttribute('data-track-folder') || '').toLowerCase();
+        r.style.display = (!q || t.includes(q) || f.includes(q)) ? 'flex' : 'none';
+      });
+    });
+  }
+
+  // Search in sidebar playlists
+  if (libSearchInput) {
+    libSearchInput.addEventListener('input', () => {
+      const q = libSearchInput.value.trim().toLowerCase();
+      document.querySelectorAll('#libFolderList .sidebar-item').forEach(item => {
+        const name = (item.getAttribute('data-name') || '').toLowerCase();
+        item.style.display = (!q || name.includes(q)) ? 'flex' : 'none';
+      });
+    });
+  }
+
+  // Sorting
+  if (sortSelect && container) {
+    sortSelect.addEventListener('change', () => {
+      const val = sortSelect.value;
+      let sorted = [...rows];
+      if (val === 'title') {
+        sorted.sort((a,b) => (a.getAttribute('data-track-title')||'').localeCompare(b.getAttribute('data-track-title')||''));
+      } else if (val === 'album') {
+        sorted.sort((a,b) => (a.getAttribute('data-track-folder')||'').localeCompare(b.getAttribute('data-track-folder')||''));
+      } else if (val === 'size') {
+        sorted.sort((a,b) => parseInt(b.getAttribute('data-track-size')||'0') - parseInt(a.getAttribute('data-track-size')||'0'));
+      }
+      sorted.forEach(r => container.appendChild(r));
+    });
+  }
+
+  // Keyboard Space to Play/Pause
+  document.addEventListener('keydown', (e) => {
+    if (['input', 'textarea', 'select'].includes(document.activeElement.tagName.toLowerCase())) return;
+    if (e.key === ' ') {
+      e.preventDefault();
+      togglePlay();
+    }
+  });
+})();
 </script>
 {% endblock %}

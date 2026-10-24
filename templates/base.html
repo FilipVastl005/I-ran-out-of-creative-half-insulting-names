@@ -6,8 +6,9 @@
   <title>{% block title %}Dashboard{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 
   <!-- Top Navigation Header -->
   <header class="app-header">

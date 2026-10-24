@@ -71,6 +71,13 @@
   /* Fonts */
   --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Backward Compatibility Aliases */
+  --card-bg: var(--bg-card);
+  --border: var(--border-subtle);
+  --text-primary: var(--text-main);
+  --accent: var(--accent-blue);
+  --danger: var(--status-danger);
 }
 
 /* Base Reset & Box Sizing */

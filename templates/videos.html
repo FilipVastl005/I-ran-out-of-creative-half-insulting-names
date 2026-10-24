@@ -1,85 +1,562 @@
 {% extends "base.html" %}
 
-{% block title %}Video{% endblock %}
+{% block title %}Videos — {{ folder or 'Library' }}{% endblock %}
 
 {% block content %}
-<div class="section-header">
-  <div>
-    <h1 class="section-title">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-        <line x1="7" y1="2" x2="7" y2="22"></line>
-        <line x1="17" y1="2" x2="17" y2="22"></line>
-        <line x1="2" y1="12" x2="22" y2="12"></line>
-        <line x1="2" y1="7" x2="7" y2="7"></line>
-        <line x1="2" y1="17" x2="7" y2="17"></line>
-        <line x1="17" y1="17" x2="22" y2="17"></line>
-        <line x1="17" y1="7" x2="22" y2="7"></line>
+<div class="media-container">
+
+  {# ---- SECTION HEADER ---- #}
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+          <line x1="7" y1="2" x2="7" y2="22"></line>
+          <line x1="17" y1="2" x2="17" y2="22"></line>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+        </svg>
+        <span>Videos</span>
+      </h1>
+      <div class="breadcrumbs" style="margin-top: 6px; margin-bottom: 0;">
+        <a href="{{ url_for('videos') }}">Videos</a>
+        {% for crumb in crumbs %}
+        <span>/</span>
+        <a href="{{ url_for('videos', folder=crumb.path) }}">{{ crumb.name }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if is_admin %}
+    <a href="{{ url_for('admin_panel', tab='upload') }}" class="btn btn-sm btn-primary" title="Upload Video">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
-      <span>Video</span>
-    </h1>
-    <div class="breadcrumbs" style="margin-top: 6px; margin-bottom: 0;">
-      <a href="{{ url_for('videos') }}">Root</a>
-      {% for crumb in crumbs %}
-      <span>/</span>
-      <a href="{{ url_for('videos', folder=crumb.path) }}">{{ crumb.name }}</a>
+      <span>Upload Video</span>
+    </a>
+    {% endif %}
+  </div>
+
+  {# ---- SUBFOLDERS / COLLECTIONS (PLAYLISTS) ---- #}
+  {% if subfolders %}
+  <div style="margin-bottom: 20px;">
+    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 8px;">
+      Collections & Playlists
+    </div>
+    <div class="folder-chip-row">
+      <a href="{{ url_for('videos') }}" class="folder-chip {% if not folder %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span>All Videos</span>
+      </a>
+      {% for sub in subfolders %}
+      <a href="{{ url_for('videos', folder=sub.path) }}" class="folder-chip {% if folder == sub.path %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>{{ sub.name }}</span>
+      </a>
       {% endfor %}
     </div>
   </div>
-  {% if is_admin %}
-  <a href="{{ url_for('admin_panel', tab='upload') }}" class="btn btn-sm btn-primary" title="Upload Video">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
-    <span>Upload Video</span>
-  </a>
   {% endif %}
-</div>
 
-<!-- Subfolders -->
-{% if subfolders %}
-<div class="drive-section-title">Folders</div>
-<div class="drive-folder-grid">
-  {% for sub in subfolders %}
-  <a href="{{ url_for('videos', folder=sub.path) }}" class="drive-folder-card" title="Open {{ sub.name }}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-    </svg>
-    <span class="drive-folder-name">{{ sub.name }}</span>
-  </a>
-  {% endfor %}
-</div>
-{% endif %}
-
-<!-- Video Grid -->
-{% if items %}
-<div class="video-grid">
-  {% for v in items %}
-  <div class="video-card">
-    <a href="{{ url_for('watch', media_id=v.id) }}" class="video-thumbnail-placeholder" title="Watch {{ v.title }}">
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+  {# ---- SEARCH, SORT & ACTIONS BAR ---- #}
+  <div class="filter-bar">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
-      {% if v.min_age and v.min_age > 0 %}
-      <span class="video-restricted-badge">{{ v.min_age }}+</span>
-      {% elif v.age_restricted %}
-      <span class="video-restricted-badge">18+</span>
-      {% endif %}
-    </a>
-    <div class="video-info">
-      <div class="video-title" title="{{ v.title }}">{{ v.title }}</div>
-      <div class="video-meta">
-        <span>{{ v.filename }}</span>
-        <span>{{ v.size_bytes | human_size }}</span>
-      </div>
+      <input type="text" id="videoSearchInput" class="simple-search-input" placeholder="Search videos in this folder..." autocomplete="off">
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <select id="videoSortSelect" class="simple-select" title="Sort videos">
+        <option value="default">Sort: Default</option>
+        <option value="title-asc">Title (A &rarr; Z)</option>
+        <option value="title-desc">Title (Z &rarr; A)</option>
+        <option value="size-desc">Size (Largest)</option>
+        <option value="size-asc">Size (Smallest)</option>
+      </select>
+
+      <span class="count-tag" id="videoCountBadge">{{ items | length }} video{{ 's' if items|length != 1 else '' }}</span>
     </div>
   </div>
-  {% endfor %}
+
+  {# ---- VIDEO CATALOG GRID ---- #}
+  {% if items %}
+  <div class="simple-video-grid" id="videoGrid">
+    {% for v in items %}
+    <div class="simple-video-card"
+         data-id="{{ v.id }}"
+         data-title="{{ v.title | lower }}"
+         data-size="{{ v.size_bytes }}"
+         data-json="{{ v | tojson | forceescape }}">
+
+      {# 16:9 Thumbnail Box #}
+      <a href="{{ url_for('watch', media_id=v.id) }}" class="simple-video-thumb" title="Watch {{ v.title }}">
+        <div class="thumb-icon-placeholder">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </div>
+        <div class="thumb-badges">
+          <span class="pill-format">{{ v.mime_type.split('/')[-1].upper() if '/' in v.mime_type else 'VIDEO' }}</span>
+          <span class="pill-size">{{ v.size_bytes | human_size }}</span>
+          {% if v.min_age and v.min_age > 0 %}
+          <span class="pill-age">{{ v.min_age }}+</span>
+          {% elif v.age_restricted %}
+          <span class="pill-age">18+</span>
+          {% endif %}
+        </div>
+      </a>
+
+      {# Card Info #}
+      <div class="simple-video-body">
+        <a href="{{ url_for('watch', media_id=v.id) }}" class="simple-video-title" title="{{ v.title }}">
+          {{ v.title }}
+        </a>
+
+        <div class="simple-video-meta">
+          <span>{{ v.filename }}</span>
+          {% if v.folder %}
+          <span>&bull;</span>
+          <span>{{ v.folder }}</span>
+          {% endif %}
+        </div>
+
+        {# Direct Actions #}
+        <div class="simple-video-actions">
+          <a href="{{ url_for('watch', media_id=v.id) }}" class="btn btn-sm btn-primary">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 12px; height: 12px;">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Watch</span>
+          </a>
+          <button type="button" class="btn btn-sm" onclick="openDetailsModal({{ v.id }}, {{ v | tojson | forceescape }})" title="Details & Specs">
+            <span>Details</span>
+          </button>
+          <a href="{{ url_for('download', media_id=v.id) }}" class="btn btn-sm btn-icon" download title="Download video file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 13px; height: 13px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="noMatchMessage" style="display:none; text-align: center; padding: 48px 20px; color: var(--text-muted); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); margin-top: 16px;">
+    No videos found matching your search.
+  </div>
+
+  {% else %}
+  <div class="card" style="text-align: center; color: var(--text-muted); padding: 48px 20px;">
+    No videos found in this folder.
+  </div>
+  {% endif %}
+
 </div>
-{% else %}
-<div class="card" style="text-align: center; color: var(--text-muted); padding: 48px 20px;">
-  No videos found in this folder.
+
+{# ---- DETAILS MODAL ---- #}
+<div id="detailsModal" class="simple-modal-backdrop" style="display:none;" onclick="if(event.target===this)closeDetailsModal()">
+  <div class="simple-modal">
+    <div class="simple-modal-header">
+      <h3 id="modalTitle">Video Details</h3>
+      <button type="button" class="simple-modal-close" onclick="closeDetailsModal()">&times;</button>
+    </div>
+    <div class="simple-modal-body">
+      <div class="spec-table">
+        <div class="spec-row">
+          <span class="spec-key">Filename</span>
+          <span class="spec-val" id="modalFilename">-</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">File Size</span>
+          <span class="spec-val" id="modalSize">-</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Container / MIME</span>
+          <span class="spec-val" id="modalMime">-</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Folder</span>
+          <span class="spec-val" id="modalFolder">-</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Direct Play</span>
+          <span class="spec-val" style="color: var(--status-success);">Supported (HTTP Range Seeking)</span>
+        </div>
+      </div>
+    </div>
+    <div class="simple-modal-footer">
+      <a href="#" id="modalWatchLink" class="btn btn-sm btn-primary">Watch Now</a>
+      <a href="#" id="modalDownloadLink" class="btn btn-sm" download>Download</a>
+      <button type="button" class="btn btn-sm" onclick="closeDetailsModal()">Close</button>
+    </div>
+  </div>
 </div>
-{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+/* ================================================================
+   CLEAN, SIMPLE, NO-EFFECTS VIDEO INTERFACE
+================================================================ */
+.media-container {
+  width: 100%;
+}
+
+/* Subfolder Chips / Playlists */
+.folder-chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.folder-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.12s ease;
+}
+.folder-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+.folder-chip.active {
+  background: var(--accent-blue-subtle);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue-text);
+  font-weight: 600;
+}
+
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.search-input-wrap {
+  position: relative;
+  width: 280px;
+}
+.search-input-wrap svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+.simple-search-input {
+  width: 100%;
+  padding: 6px 12px 6px 30px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-main);
+  font-size: 13px;
+  outline: none;
+}
+.simple-search-input:focus {
+  border-color: var(--accent-blue);
+}
+.simple-select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  outline: none;
+}
+.count-tag {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Simple Video Grid */
+.simple-video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+/* Simple Video Card */
+.simple-video-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.simple-video-card:hover {
+  border-color: var(--border-medium);
+}
+
+/* 16:9 Thumbnail Area */
+.simple-video-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-hover);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.thumb-icon-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-blue);
+}
+.thumb-icon-placeholder svg { width: 18px; height: 18px; margin-left: 2px; }
+
+.thumb-badges {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+}
+.pill-format, .pill-size, .pill-age {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+}
+.pill-age {
+  background: var(--status-danger);
+}
+
+/* Card Body */
+.simple-video-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.simple-video-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+.simple-video-title:hover {
+  color: var(--accent-blue);
+}
+.simple-video-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 14px;
+}
+
+/* Card Actions */
+.simple-video-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+/* Simple Modal */
+.simple-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.simple-modal {
+  width: 480px;
+  max-width: 95vw;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.simple-modal-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.simple-modal-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+.simple-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+.simple-modal-body {
+  padding: 18px;
+}
+.spec-table {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.spec-key {
+  color: var(--text-muted);
+}
+.spec-val {
+  color: var(--text-main);
+  font-weight: 500;
+  font-family: var(--font-mono);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.simple-modal-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+</style>
+
+<script>
+(function() {
+  const searchInput = document.getElementById('videoSearchInput');
+  const sortSelect = document.getElementById('videoSortSelect');
+  const grid = document.getElementById('videoGrid');
+  const countBadge = document.getElementById('videoCountBadge');
+  const noMatchMsg = document.getElementById('noMatchMessage');
+
+  if (!grid) return;
+  const cards = Array.from(grid.querySelectorAll('.simple-video-card'));
+
+  function filterAndSort() {
+    const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+    const sortVal = sortSelect ? sortSelect.value : 'default';
+
+    let visible = [];
+
+    cards.forEach(card => {
+      const title = card.getAttribute('data-title') || '';
+      if (!q || title.includes(q)) {
+        card.style.display = '';
+        visible.push(card);
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (sortVal === 'title-asc') {
+      visible.sort((a,b) => (a.getAttribute('data-title')||'').localeCompare(b.getAttribute('data-title')||''));
+    } else if (sortVal === 'title-desc') {
+      visible.sort((a,b) => (b.getAttribute('data-title')||'').localeCompare(a.getAttribute('data-title')||''));
+    } else if (sortVal === 'size-desc') {
+      visible.sort((a,b) => parseInt(b.getAttribute('data-size')||'0') - parseInt(a.getAttribute('data-size')||'0'));
+    } else if (sortVal === 'size-asc') {
+      visible.sort((a,b) => parseInt(a.getAttribute('data-size')||'0') - parseInt(b.getAttribute('data-size')||'0'));
+    }
+
+    visible.forEach(c => grid.appendChild(c));
+
+    if (countBadge) countBadge.textContent = visible.length + ' video' + (visible.length === 1 ? '' : 's');
+    if (noMatchMsg) noMatchMsg.style.display = (visible.length === 0 && q) ? 'block' : 'none';
+  }
+
+  if (searchInput) searchInput.addEventListener('input', filterAndSort);
+  if (sortSelect) sortSelect.addEventListener('change', filterAndSort);
+
+  // Modal logic
+  window.openDetailsModal = function(id, data) {
+    const modal = document.getElementById('detailsModal');
+    if (!modal) return;
+    document.getElementById('modalTitle').textContent = data.title || 'Video Details';
+    document.getElementById('modalFilename').textContent = data.filename || '-';
+    document.getElementById('modalSize').textContent = formatBytes(data.size_bytes || 0);
+    document.getElementById('modalMime').textContent = data.mime_type || 'video/mp4';
+    document.getElementById('modalFolder').textContent = data.folder || 'Root';
+    document.getElementById('modalWatchLink').href = '/videos/' + id;
+    document.getElementById('modalDownloadLink').href = '/download/' + id;
+    modal.style.display = 'flex';
+  };
+
+  window.closeDetailsModal = function() {
+    const modal = document.getElementById('detailsModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDetailsModal();
+  });
+
+  function formatBytes(bytes) {
+    if (!bytes || bytes <= 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+})();
+</script>
 {% endblock %}
