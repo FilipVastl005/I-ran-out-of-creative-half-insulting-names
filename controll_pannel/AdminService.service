@@ -1,0 +1,14 @@
+[Unit]
+Description=Server Controll Pannel
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/user/APPS/Controll_Pannel
+ExecStart=/usr/bin/python3 /home/user/APPS/Controll_Pannel/app.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

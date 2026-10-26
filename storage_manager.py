@@ -182,8 +182,10 @@ def load_stored_active_storage(instance_dir, default_media_root):
             with open(cfg_path, "r", encoding="utf-8") as fh:
                 data = json.load(fh)
                 saved = data.get("active_media_root")
-                if saved and os.path.exists(saved) and os.path.isdir(saved):
+                if saved and os.path.exists(saved) and os.path.isdir(saved) and os.access(saved, os.W_OK):
                     return os.path.realpath(saved)
+                elif saved:
+                    logger.warning(f"Saved active storage '{saved}' is inaccessible or read-only. Falling back to default.")
         except Exception as e:
             logger.warning(f"Failed to read storage_config.json: {e}")
     return os.path.realpath(default_media_root)
@@ -224,9 +226,21 @@ def set_active_storage(app, target_path, auto_format=True):
     os.makedirs(instance_dir, exist_ok=True)
     cfg_path = _get_storage_config_path(instance_dir)
     try:
+        # Detect UUID if available
+        detected_uuid = ""
+        try:
+            dev_info = list_storage_devices(real_path)
+            for part in dev_info.get("storage_targets", []):
+                if part.get("path") == real_path and part.get("uuid"):
+                    detected_uuid = part.get("uuid")
+                    break
+        except Exception:
+            pass
+
         with open(cfg_path, "w", encoding="utf-8") as fh:
             json.dump({
                 "active_media_root": real_path,
+                "uuid": detected_uuid,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }, fh, indent=2)
     except Exception as e:
@@ -478,6 +492,7 @@ def init_storage(app):
     """
     Application startup initialization for storage.
     Ensures active MEDIA_ROOT is loaded and initial folders are in place.
+    Safely falls back to internal default storage if external storage is offline.
     """
     default_root = os.path.realpath(app.config.get("MEDIA_ROOT", os.path.join(app.root_path, "media")))
     app.config["DEFAULT_MEDIA_ROOT"] = default_root
@@ -486,8 +501,24 @@ def init_storage(app):
     app.config["MEDIA_ROOT"] = active_root
     app.config["TORRENT_INCOMING_DIR"] = os.path.join(active_root, "incoming")
 
-    # Ensure required folders exist on active root
-    for d in REQUIRED_APP_DIRS:
-        os.makedirs(os.path.join(active_root, d), exist_ok=True)
+    # Ensure required folders exist on active root with error fallback
+    try:
+        for d in REQUIRED_APP_DIRS:
+            os.makedirs(os.path.join(active_root, d), exist_ok=True)
+        app.config["STORAGE_STATUS"] = {"healthy": True, "active_root": active_root, "fallback": (active_root == default_root)}
+    except OSError as e:
+        logger.error(
+            f"Failed to access active storage '{active_root}': {e}. "
+            f"Falling back to default media root: '{default_root}'"
+        )
+        active_root = default_root
+        app.config["MEDIA_ROOT"] = default_root
+        app.config["TORRENT_INCOMING_DIR"] = os.path.join(default_root, "incoming")
+        for d in REQUIRED_APP_DIRS:
+            try:
+                os.makedirs(os.path.join(default_root, d), exist_ok=True)
+            except OSError:
+                pass
+        app.config["STORAGE_STATUS"] = {"healthy": False, "error": str(e), "active_root": active_root, "fallback": True}
 
     logger.info(f"Initialized active media storage target at: {active_root}")

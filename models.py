@@ -106,7 +106,7 @@ def _connect(path):
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA synchronous = NORMAL")
     conn.execute("PRAGMA temp_store = MEMORY")
-    conn.execute("PRAGMA cache_size = -8000")  # ~8 MB page cache
+    conn.execute("PRAGMA cache_size = -32000")  # ~32 MB page cache (optimized for 6-8 GB RAM)
     conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 

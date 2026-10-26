@@ -1,0 +1,30 @@
+[
+  {
+    "id": "mateo",
+    "name": "Mateo Media Server",
+    "service": "AllInOneAdmin.service",
+    "description": "Direct-play streaming, personal drive & library (Port 8000)",
+    "url": "http://192.168.1.240:8000"
+  },
+  {
+    "id": "transmission",
+    "name": "Transmission BitTorrent",
+    "service": "transmission-daemon.service",
+    "description": "Background torrent ingestion & download daemon (Port 9091)",
+    "url": "http://192.168.1.240:9091/transmission/web/"
+  },
+  {
+    "id": "panel",
+    "name": "Server Control Panel",
+    "service": "AdminService.service",
+    "description": "Hardware stats, service supervisor & web terminal (Port 8080)",
+    "url": "http://192.168.1.240:8080"
+  },
+  {
+    "id": "ssh",
+    "name": "SSH Daemon",
+    "service": "ssh.service",
+    "description": "OpenSSH secure remote access server (Port 22)",
+    "url": ""
+  }
+]

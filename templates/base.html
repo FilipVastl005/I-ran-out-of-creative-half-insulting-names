@@ -121,6 +121,14 @@
     </div>
   </header>
 
+  {% if storage_status and not storage_status.healthy %}
+  <div class="flash-container" style="margin-top: 12px; margin-bottom: 0;">
+    <div class="flash-message error" style="background: var(--status-warning-subtle); border: 1px solid var(--status-warning); color: var(--status-warning-text); display: flex; align-items: center; justify-content: space-between;">
+      <span><strong>Storage Notice:</strong> Primary media drive is currently unavailable or disconnected. The server is safely operating on internal fallback storage.</span>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Flash Message Notifications -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}

@@ -791,35 +791,110 @@
   /* ================================================================
      XHR UPLOAD
   ================================================================ */
-  function xhrUpload(files, form) {
+  /* ================================================================
+     SEQUENTIAL XHR UPLOAD
+  ================================================================ */
+  async function xhrUpload(files, form) {
     hideDropZone();
-    const fd = new FormData();
-    const csrf = form ? form.querySelector('[name="_csrf"]') : null;
-    const folder = form ? form.querySelector('[name="folder"]') : null;
-    if (csrf)   fd.append('_csrf', csrf.value);
-    if (folder) fd.append('folder', folder.value);
-    let total = 0;
-    for (let i=0; i<files.length; i++) { fd.append('files', files[i]); total += files[i].size; }
+    if (!files || files.length === 0) return;
+
+    const fileList = Array.from(files);
+    const csrf = form ? form.querySelector('[name="_csrf"]')?.value : '';
+    const folder = form ? form.querySelector('[name="folder"]')?.value : '';
+
+    let totalBatchBytes = 0;
+    fileList.forEach(f => totalBatchBytes += f.size);
+    let completedBytes = 0;
+    let successfulCount = 0;
+    let failedCount = 0;
 
     if (uploadBanner) {
-      uploadLabel.textContent = 'Uploading ' + files.length + ' file' + (files.length>1?'s':'') + '…';
-      uploadSub.textContent   = fmtBytes(total);
-      uploadBar.style.width   = '0%';
       uploadBanner.style.display = 'block';
+      uploadBar.style.width = '0%';
     }
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '{{ url_for("drive_upload") }}', true);
-    xhr.upload.addEventListener('progress', function(e) {
-      if (e.lengthComputable) {
-        const pct = Math.round(e.loaded/e.total*100);
-        if (uploadBar)   uploadBar.style.width = pct + '%';
-        if (uploadLabel) uploadLabel.textContent = 'Uploading… ' + pct + '%';
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      if (uploadLabel) {
+        uploadLabel.textContent = `Uploading ${i + 1}/${fileList.length}: ${file.name}`;
       }
-    });
-    xhr.addEventListener('load', function()  { if(uploadBanner) uploadBanner.style.display='none'; window.location.reload(); });
-    xhr.addEventListener('error', function() { if(uploadBanner) uploadBanner.style.display='none'; alert('Upload failed. Please try again.'); });
-    xhr.send(fd);
+      if (uploadSub) {
+        uploadSub.textContent = `${fmtBytes(completedBytes)} / ${fmtBytes(totalBatchBytes)}`;
+      }
+
+      let lastTime = Date.now();
+      let lastLoaded = 0;
+
+      const uploadSingle = () => new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        const fd = new FormData();
+        if (csrf) fd.append('_csrf', csrf);
+        if (folder) fd.append('folder', folder);
+        fd.append('ajax', '1');
+        fd.append('files', file);
+
+        xhr.upload.addEventListener('progress', function(e) {
+          if (e.lengthComputable) {
+            const now = Date.now();
+            const timeDiff = (now - lastTime) / 1000;
+            let speedStr = '';
+            if (timeDiff > 0.4) {
+              const speedBps = (e.loaded - lastLoaded) / timeDiff;
+              speedStr = ' • ' + fmtBytes(speedBps) + '/s';
+              lastLoaded = e.loaded;
+              lastTime = now;
+            }
+
+            const currentBatchLoaded = completedBytes + e.loaded;
+            const overallPct = Math.min(100, Math.round((currentBatchLoaded / (totalBatchBytes || 1)) * 100));
+
+            if (uploadBar) uploadBar.style.width = overallPct + '%';
+            if (uploadSub) {
+              uploadSub.textContent = `${fmtBytes(currentBatchLoaded)} / ${fmtBytes(totalBatchBytes)} (${overallPct}%)${speedStr}`;
+            }
+          }
+        });
+
+        xhr.addEventListener('load', function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve({ success: true });
+          } else {
+            let err = 'Server error';
+            try {
+              const res = JSON.parse(xhr.responseText);
+              if (res.message) err = res.message;
+            } catch (_) {}
+            resolve({ success: false, error: err });
+          }
+        });
+
+        xhr.addEventListener('error', function() {
+          resolve({ success: false, error: 'Connection lost' });
+        });
+
+        xhr.open('POST', '{{ url_for("drive_upload") }}', true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.send(fd);
+      });
+
+      const res = await uploadSingle();
+      completedBytes += file.size;
+      if (res.success) {
+        successfulCount++;
+      } else {
+        failedCount++;
+      }
+    }
+
+    if (uploadBar) uploadBar.style.width = '100%';
+    if (uploadLabel) {
+      uploadLabel.textContent = failedCount === 0 ? 'Upload complete!' : `Uploaded ${successfulCount}, ${failedCount} failed`;
+    }
+    setTimeout(function() {
+      if (uploadBanner) uploadBanner.style.display = 'none';
+      window.location.reload();
+    }, 1000);
   }
 
   function fmtBytes(b) {

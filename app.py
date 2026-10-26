@@ -41,13 +41,23 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INSTANCE_DIR = os.environ.get("MATEO_INSTANCE_DIR", os.path.join(BASE_DIR, "instance"))
 MEDIA_ROOT = os.environ.get("MATEO_MEDIA_ROOT", os.path.join(BASE_DIR, "media"))
 
+# Dedicated disk-backed upload buffering directory (prevents tmpfs/RAM exhaustion)
+UPLOAD_TEMP_DIR = os.environ.get("MATEO_TEMP_DIR", os.path.join(INSTANCE_DIR, "tmp"))
+os.makedirs(UPLOAD_TEMP_DIR, exist_ok=True)
+os.environ.setdefault("TMPDIR", UPLOAD_TEMP_DIR)
+import tempfile
+tempfile.tempdir = UPLOAD_TEMP_DIR
+
 # category -> directory name inside MEDIA_ROOT
 CATEGORY_DIRS = {"video": "videos", "music": "music", "photo": "photos", "file": "files"}
 TORRENT_INCOMING_DIR = "incoming"
 
 os.makedirs(INSTANCE_DIR, exist_ok=True)
 for _d in list(CATEGORY_DIRS.values()) + [TORRENT_INCOMING_DIR, models.USER_DRIVE_DIR]:
-    os.makedirs(os.path.join(MEDIA_ROOT, _d), exist_ok=True)
+    try:
+        os.makedirs(os.path.join(MEDIA_ROOT, _d), exist_ok=True)
+    except OSError:
+        pass
 
 
 def _load_secret_key():
@@ -74,8 +84,8 @@ app.config.update(
     DEFAULT_MEDIA_ROOT=MEDIA_ROOT,
     CATEGORY_DIRS=CATEGORY_DIRS,
     TORRENT_INCOMING_DIR=os.path.join(MEDIA_ROOT, TORRENT_INCOMING_DIR),
-    # Uploads: cap a single request at 20 GB by default (override via env, in bytes).
-    MAX_CONTENT_LENGTH=int(os.environ.get("MATEO_MAX_UPLOAD", 20 * 1024 ** 3)),
+    # Uploads: cap a single request at 100 GB by default (override via env, in bytes).
+    MAX_CONTENT_LENGTH=int(os.environ.get("MATEO_MAX_UPLOAD", 100 * 1024 ** 3)),
     # 512 KiB reads: large enough for efficient sequential HDD reads,
     # small enough to keep per-stream RAM tiny.
     STREAM_CHUNK_SIZE=512 * 1024,
@@ -136,6 +146,7 @@ def inject_globals():
         "current_user": user,
         "is_admin": bool(user and user["role"] == "admin"),
         "csrf_token": csrf_token,
+        "storage_status": app.config.get("STORAGE_STATUS", {"healthy": True}),
     }
 
 
@@ -257,18 +268,43 @@ def breadcrumbs(folder):
     return crumbs
 
 
+def get_safe_media_root():
+    """Returns the active MEDIA_ROOT if accessible and writable, or falls back to DEFAULT_MEDIA_ROOT."""
+    root = app.config.get("MEDIA_ROOT")
+    if root:
+        try:
+            real_root = os.path.realpath(root)
+            if os.path.exists(real_root) and os.access(real_root, os.W_OK):
+                return real_root
+        except OSError:
+            pass
+    fallback = app.config.get("DEFAULT_MEDIA_ROOT", os.path.join(BASE_DIR, "media"))
+    try:
+        real_fallback = os.path.realpath(fallback)
+        os.makedirs(real_fallback, exist_ok=True)
+        return real_fallback
+    except OSError:
+        return os.path.realpath(fallback)
+
+
 def resolve_media_path(rel_path):
     """Absolute path for a DB rel_path, guaranteed to stay inside MEDIA_ROOT or fallback root."""
-    root = os.path.realpath(app.config["MEDIA_ROOT"])
-    full = os.path.realpath(os.path.join(root, rel_path))
-    if os.path.commonpath([root, full]) == root and os.path.isfile(full):
-        return full
+    try:
+        root = os.path.realpath(app.config["MEDIA_ROOT"])
+        full = os.path.realpath(os.path.join(root, rel_path))
+        if os.path.commonpath([root, full]) == root and os.path.isfile(full):
+            return full
+    except Exception:
+        pass
     # Check default root fallback if active storage differs and file was saved previously
-    default_root = os.path.realpath(app.config.get("DEFAULT_MEDIA_ROOT", root))
-    if default_root != root:
-        fallback = os.path.realpath(os.path.join(default_root, rel_path))
-        if os.path.commonpath([default_root, fallback]) == default_root and os.path.isfile(fallback):
-            return fallback
+    try:
+        default_root = os.path.realpath(app.config.get("DEFAULT_MEDIA_ROOT", ""))
+        if default_root:
+            fallback = os.path.realpath(os.path.join(default_root, rel_path))
+            if os.path.commonpath([default_root, fallback]) == default_root and os.path.isfile(fallback):
+                return fallback
+    except Exception:
+        pass
     abort(404)
 
 
@@ -592,22 +628,29 @@ def download(media_id):
 # User Drive: personal cloud storage (all roles)
 # --------------------------------------------------------------------------- #
 def _user_drive_root(username):
-    """Absolute path to the user's personal drive directory."""
+    """Absolute path to the user's personal drive directory with storage resilience."""
     safe = secure_filename(username) or f"user_{username}"
-    return os.path.join(app.config["MEDIA_ROOT"], models.USER_DRIVE_DIR, safe)
+    root = get_safe_media_root()
+    return os.path.join(root, models.USER_DRIVE_DIR, safe)
 
 
 def _resolve_drive_path(rel_path):
     """Absolute path for a user_drive rel_path, with traversal guard."""
-    root = os.path.realpath(app.config["MEDIA_ROOT"])
-    full = os.path.realpath(os.path.join(root, rel_path))
-    if os.path.commonpath([root, full]) == root and os.path.isfile(full):
-        return full
-    default_root = os.path.realpath(app.config.get("DEFAULT_MEDIA_ROOT", root))
-    if default_root != root:
-        fallback = os.path.realpath(os.path.join(default_root, rel_path))
-        if os.path.commonpath([default_root, fallback]) == default_root and os.path.isfile(fallback):
-            return fallback
+    try:
+        root = os.path.realpath(app.config["MEDIA_ROOT"])
+        full = os.path.realpath(os.path.join(root, rel_path))
+        if os.path.commonpath([root, full]) == root and os.path.isfile(full):
+            return full
+    except Exception:
+        pass
+    try:
+        default_root = os.path.realpath(app.config.get("DEFAULT_MEDIA_ROOT", ""))
+        if default_root:
+            fallback = os.path.realpath(os.path.join(default_root, rel_path))
+            if os.path.commonpath([default_root, fallback]) == default_root and os.path.isfile(fallback):
+                return fallback
+    except Exception:
+        pass
     abort(404)
 
 
@@ -616,16 +659,29 @@ def _resolve_drive_path(rel_path):
 def user_drive():
     user = g.user
     folder = clean_folder(request.args.get("folder", ""))
-    # Create user drive dir on first visit
-    os.makedirs(_user_drive_root(user["username"]), exist_ok=True)
+    drive_root = _user_drive_root(user["username"])
+    try:
+        os.makedirs(drive_root, exist_ok=True)
+    except OSError as e:
+        flash(f"Storage warning: Unable to access primary drive path ({e}). Using fallback storage.", "error")
+
+    try:
+        subfolders = models.udrive_subfolders(user["id"], parent=folder)
+        items = models.udrive_list(user["id"], folder=folder)
+        file_count = models.udrive_count(user["id"])
+        used_bytes = models.udrive_total_bytes(user["id"])
+    except Exception as e:
+        subfolders, items, file_count, used_bytes = [], [], 0, 0
+        flash(f"Error loading drive items: {e}", "error")
+
     return render_template(
         "drive.html",
         folder=folder,
         crumbs=breadcrumbs(folder),
-        subfolders=models.udrive_subfolders(user["id"], parent=folder),
-        items=models.udrive_list(user["id"], folder=folder),
-        file_count=models.udrive_count(user["id"]),
-        used_bytes=models.udrive_total_bytes(user["id"]),
+        subfolders=subfolders,
+        items=items,
+        file_count=file_count,
+        used_bytes=used_bytes,
     )
 
 
@@ -635,16 +691,34 @@ def drive_upload():
     user = g.user
     folder = clean_folder(request.form.get("folder", ""))
     uploaded_files = request.files.getlist("files")
+    is_ajax = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("Accept", "")
+        or request.form.get("ajax") == "1"
+    )
 
     if not uploaded_files or (len(uploaded_files) == 1 and not uploaded_files[0].filename):
-        flash("No files selected.", "error")
+        msg = "No files selected."
+        if is_ajax:
+            return jsonify({"success": False, "message": msg, "uploaded": 0, "errors": [msg]}), 400
+        flash(msg, "error")
         return redirect(url_for("user_drive", folder=folder))
 
     drive_root = _user_drive_root(user["username"])
     target_dir = os.path.join(drive_root, folder) if folder else drive_root
-    os.makedirs(target_dir, exist_ok=True)
+    try:
+        os.makedirs(target_dir, exist_ok=True)
+    except OSError as e:
+        msg = f"Failed to access drive directory: {e}"
+        if is_ajax:
+            return jsonify({"success": False, "message": msg, "uploaded": 0, "errors": [msg]}), 500
+        flash(msg, "error")
+        return redirect(url_for("user_drive", folder=folder))
 
     success_count = 0
+    errors = []
+    saved_items = []
+
     for file in uploaded_files:
         if not file.filename:
             continue
@@ -661,18 +735,30 @@ def drive_upload():
             dest_path = os.path.join(target_dir, clean_name)
             counter += 1
 
-        with open(dest_path, "wb") as out:
-            while chunk := file.read(64 * 1024):
-                out.write(chunk)
+        try:
+            with open(dest_path, "wb") as out:
+                while chunk := file.read(128 * 1024):
+                    out.write(chunk)
+            size_bytes = os.path.getsize(dest_path)
+        except OSError as e:
+            if os.path.exists(dest_path):
+                try:
+                    os.remove(dest_path)
+                except Exception:
+                    pass
+            err_msg = f"Write error for '{clean_name}': {e}"
+            errors.append(err_msg)
+            if not is_ajax:
+                flash(err_msg, "error")
+            continue
 
-        size_bytes = os.path.getsize(dest_path)
         mime_type = mimetypes.guess_type(dest_path)[0] or "application/octet-stream"
         safe_uname = secure_filename(user["username"]) or f"user_{user['id']}"
         folder_suffix = f"{folder}/" if folder else ""
         rel_path = f"{models.USER_DRIVE_DIR}/{safe_uname}/{folder_suffix}{clean_name}"
 
         try:
-            models.udrive_add(
+            file_id = models.udrive_add(
                 owner_id=user["id"],
                 folder=folder,
                 filename=clean_name,
@@ -682,8 +768,21 @@ def drive_upload():
                 size_bytes=size_bytes,
             )
             success_count += 1
+            saved_items.append({"id": file_id, "name": orig_name, "filename": clean_name, "size": size_bytes})
         except Exception as e:
-            flash(f"Error saving {clean_name}: {e}", "error")
+            err_msg = f"Error saving {clean_name}: {e}"
+            errors.append(err_msg)
+            if not is_ajax:
+                flash(err_msg, "error")
+
+    if is_ajax:
+        return jsonify({
+            "success": success_count > 0,
+            "uploaded": success_count,
+            "errors": errors,
+            "message": f"Uploaded {success_count} file(s) to your drive." if success_count else (errors[0] if errors else "No files saved."),
+            "items": saved_items,
+        }), (200 if success_count > 0 else 400)
 
     if success_count:
         flash(f"Uploaded {success_count} file(s) to your drive.", "success")
@@ -703,15 +802,19 @@ def drive_mkdir():
     new_folder = f"{parent}/{name}" if parent else name
     new_folder = clean_folder(new_folder)
     drive_root = _user_drive_root(user["username"])
-    os.makedirs(os.path.join(drive_root, new_folder), exist_ok=True)
+    try:
+        os.makedirs(os.path.join(drive_root, new_folder), exist_ok=True)
+    except OSError as e:
+        flash(f"Failed to create directory on disk: {e}", "error")
+        return redirect(url_for("user_drive", folder=parent))
+
     # Create a .keep file so folder is browsable even when empty
     keep_path = os.path.join(drive_root, new_folder, ".keep")
     if not os.path.exists(keep_path):
-        open(keep_path, "w").close()
-        # Register a zero-byte placeholder so subfolders() can find it
-        safe_uname = secure_filename(user["username"]) or f"user_{user['id']}"
-        rel = f"{models.USER_DRIVE_DIR}/{safe_uname}/{new_folder}/.keep"
         try:
+            open(keep_path, "w").close()
+            safe_uname = secure_filename(user["username"]) or f"user_{user['id']}"
+            rel = f"{models.USER_DRIVE_DIR}/{safe_uname}/{new_folder}/.keep"
             models.udrive_add(
                 owner_id=user["id"],
                 folder=new_folder,
@@ -722,7 +825,7 @@ def drive_mkdir():
                 size_bytes=0,
             )
         except Exception:
-            pass  # already exists is fine
+            pass  # already exists or non-fatal
     flash(f"Folder '{name}' created.", "success")
     return redirect(url_for("user_drive", folder=parent))
 
@@ -818,8 +921,17 @@ def admin_panel():
 @admin_required
 def admin_upload():
     category = request.form.get("category")
+    is_ajax = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("Accept", "")
+        or request.form.get("ajax") == "1"
+    )
+
     if category not in models.CATEGORIES:
-        flash("Invalid media category.", "error")
+        msg = "Invalid media category."
+        if is_ajax:
+            return jsonify({"success": False, "message": msg, "uploaded": 0, "errors": [msg]}), 400
+        flash(msg, "error")
         return redirect(url_for("admin_panel", tab="upload"))
 
     folder = clean_folder(request.form.get("folder", ""))
@@ -830,16 +942,31 @@ def admin_upload():
     uploaded_files = request.files.getlist("files")
 
     if not uploaded_files or (len(uploaded_files) == 1 and not uploaded_files[0].filename):
-        flash("No files selected for upload.", "error")
+        msg = "No files selected for upload."
+        if is_ajax:
+            return jsonify({"success": False, "message": msg, "uploaded": 0, "errors": [msg]}), 400
+        flash(msg, "error")
         return redirect(url_for("admin_panel", tab="upload"))
 
+    media_root = get_safe_media_root()
     cat_dir = app.config["CATEGORY_DIRS"][category]
-    target_dir = os.path.join(app.config["MEDIA_ROOT"], cat_dir)
+    target_dir = os.path.join(media_root, cat_dir)
     if folder:
         target_dir = os.path.join(target_dir, folder)
-    os.makedirs(target_dir, exist_ok=True)
+
+    try:
+        os.makedirs(target_dir, exist_ok=True)
+    except OSError as e:
+        msg = f"Failed to access media directory: {e}"
+        if is_ajax:
+            return jsonify({"success": False, "message": msg, "uploaded": 0, "errors": [msg]}), 500
+        flash(msg, "error")
+        return redirect(url_for("admin_panel", tab="upload"))
 
     success_count = 0
+    errors = []
+    saved_items = []
+
     for file in uploaded_files:
         if not file.filename:
             continue
@@ -855,17 +982,29 @@ def admin_upload():
             dest_path = os.path.join(target_dir, clean_name)
             counter += 1
 
-        with open(dest_path, "wb") as out:
-            while chunk := file.read(64 * 1024):
-                out.write(chunk)
+        try:
+            with open(dest_path, "wb") as out:
+                while chunk := file.read(128 * 1024):
+                    out.write(chunk)
+            size_bytes = os.path.getsize(dest_path)
+        except OSError as e:
+            if os.path.exists(dest_path):
+                try:
+                    os.remove(dest_path)
+                except Exception:
+                    pass
+            err_msg = f"Write error for '{clean_name}': {e}"
+            errors.append(err_msg)
+            if not is_ajax:
+                flash(err_msg, "error")
+            continue
 
-        size_bytes = os.path.getsize(dest_path)
         mime_type = mimetypes.guess_type(dest_path)[0] or "application/octet-stream"
         rel_path = f"{cat_dir}/{folder + '/' if folder else ''}{clean_name}"
         title = name_root.replace("-", " ").replace("_", " ").strip() or clean_name
 
         try:
-            models.add_media(
+            media_id = models.add_media(
                 title=title,
                 category=category,
                 rel_path=rel_path,
@@ -878,8 +1017,21 @@ def admin_upload():
                 uploaded_by=g.user["id"],
             )
             success_count += 1
+            saved_items.append({"id": media_id, "title": title, "filename": clean_name, "size": size_bytes})
         except Exception as e:
-            flash(f"Error registering {clean_name}: {e}", "error")
+            err_msg = f"Error registering {clean_name}: {e}"
+            errors.append(err_msg)
+            if not is_ajax:
+                flash(err_msg, "error")
+
+    if is_ajax:
+        return jsonify({
+            "success": success_count > 0,
+            "uploaded": success_count,
+            "errors": errors,
+            "message": f"Successfully uploaded {success_count} file(s) into {category.capitalize()}." if success_count else (errors[0] if errors else "Upload failed."),
+            "items": saved_items,
+        }), (200 if success_count > 0 else 400)
 
     flash(f"Successfully uploaded {success_count} file(s) into {category.capitalize()}.", "success")
     return redirect(url_for("admin_panel", tab="upload"))
@@ -1200,8 +1352,10 @@ def handle_error(err):
         413: "The uploaded file is too large.",
         500: "Internal server error.",
     }
-    description = getattr(err, "description", None) if code == 400 else None
+    description = getattr(err, "description", None) if code in (400, 413) else None
     message = description or messages.get(code, "Error.")
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest" or "application/json" in request.headers.get("Accept", ""):
+        return jsonify({"success": False, "error": code, "message": message}), code
     try:
         return render_template("error.html", code=code, message=message), code
     except TemplateNotFound:

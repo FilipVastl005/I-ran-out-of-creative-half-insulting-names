@@ -132,6 +132,35 @@
             <div id="fileListPreview" style="margin-top: 10px; font-size: 13px; color: var(--text-secondary);"></div>
           </div>
 
+          <!-- Live Sequential Upload Progress Container -->
+          <div id="uploadProgressContainer" style="display: none; margin-top: 16px; padding: 16px; background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="uploadQueueBadge" class="badge" style="background: var(--accent-blue-subtle); color: var(--accent-blue-text); font-weight: 600;">Uploading</span>
+                <strong id="uploadCurrentFileTitle" style="font-size: 13px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;">Preparing…</strong>
+              </div>
+              <button type="button" id="uploadCancelBtn" class="btn" style="padding: 4px 10px; font-size: 12px; background: transparent; border: 1px solid var(--border-medium); color: var(--text-secondary); cursor: pointer;">Cancel</button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
+              <span id="uploadCurrentFileStats">0 MB / 0 MB (0%)</span>
+              <span id="uploadSpeedEta">-- MB/s • ETA: --</span>
+            </div>
+            <div style="height: 6px; background: var(--border-subtle); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">
+              <div id="uploadCurrentFileBar" style="height: 100%; width: 0%; background: var(--accent-blue); transition: width 0.15s ease;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+              <span id="uploadOverallStats">Batch: File 0 of 0</span>
+              <span id="uploadOverallPct">Overall: 0%</span>
+            </div>
+            <div style="height: 4px; background: var(--border-subtle); border-radius: 2px; overflow: hidden; margin-bottom: 12px;">
+              <div id="uploadOverallBar" style="height: 100%; width: 0%; background: var(--status-success); transition: width 0.2s ease;"></div>
+            </div>
+
+            <div id="uploadQueueList" style="max-height: 140px; overflow-y: auto; font-size: 12px; border-top: 1px solid var(--border-subtle); padding-top: 8px; display: flex; flex-direction: column; gap: 4px;"></div>
+          </div>
+
           <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">
               <span>Start Upload</span>
@@ -1015,6 +1044,205 @@
         } else {
           preview.textContent = `Selected ${count} files ready for upload.`;
         }
+      }
+
+      // Sequential File-by-File Upload with Live Progress & Cancellation
+      const uploadForm = document.getElementById('uploadForm');
+      const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
+      const uploadProgressContainer = document.getElementById('uploadProgressContainer');
+      const uploadQueueBadge = document.getElementById('uploadQueueBadge');
+      const uploadCurrentFileTitle = document.getElementById('uploadCurrentFileTitle');
+      const uploadCurrentFileStats = document.getElementById('uploadCurrentFileStats');
+      const uploadSpeedEta = document.getElementById('uploadSpeedEta');
+      const uploadCurrentFileBar = document.getElementById('uploadCurrentFileBar');
+      const uploadOverallStats = document.getElementById('uploadOverallStats');
+      const uploadOverallPct = document.getElementById('uploadOverallPct');
+      const uploadOverallBar = document.getElementById('uploadOverallBar');
+      const uploadQueueList = document.getElementById('uploadQueueList');
+      const uploadCancelBtn = document.getElementById('uploadCancelBtn');
+
+      let activeXHR = null;
+      let isUploadCancelled = false;
+
+      function formatBytes(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+        return (bytes / 1073741824).toFixed(2) + ' GB';
+      }
+
+      if (uploadCancelBtn) {
+        uploadCancelBtn.addEventListener('click', () => {
+          if (activeXHR) {
+            isUploadCancelled = true;
+            activeXHR.abort();
+            activeXHR = null;
+          }
+        });
+      }
+
+      if (uploadForm) {
+        uploadForm.addEventListener('submit', async function(e) {
+          if (!fileInput.files || fileInput.files.length === 0) return;
+          e.preventDefault();
+
+          const files = Array.from(fileInput.files);
+          const csrf = uploadForm.querySelector('[name="_csrf"]')?.value || '';
+          const category = document.getElementById('uploadCategory')?.value || 'video';
+          const folder = document.getElementById('uploadFolder')?.value || '';
+          const minAge = document.getElementById('uploadMinAge')?.value || '0';
+
+          uploadProgressContainer.style.display = 'block';
+          uploadSubmitBtn.disabled = true;
+          uploadSubmitBtn.innerHTML = '<span>Uploading…</span>';
+          isUploadCancelled = false;
+          uploadQueueBadge.textContent = 'Uploading';
+          uploadQueueBadge.style.background = 'var(--accent-blue-subtle)';
+          uploadQueueBadge.style.color = 'var(--accent-blue-text)';
+
+          let totalBatchBytes = 0;
+          files.forEach(f => totalBatchBytes += f.size);
+          let completedBytes = 0;
+          let successfulCount = 0;
+          let failedCount = 0;
+
+          // Render initial queue list
+          uploadQueueList.innerHTML = files.map((f, idx) => `
+            <div id="queue-item-${idx}" style="display:flex; justify-content:space-between; align-items:center; padding:3px 6px; border-radius:4px; background:var(--bg-card);">
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:260px;">${f.name}</span>
+              <span id="queue-status-${idx}" style="color:var(--text-muted); font-size:11px;">Waiting (${formatBytes(f.size)})</span>
+            </div>
+          `).join('');
+
+          for (let i = 0; i < files.length; i++) {
+            if (isUploadCancelled) {
+              for (let j = i; j < files.length; j++) {
+                const el = document.getElementById(`queue-status-${j}`);
+                if (el) el.innerHTML = '<span style="color:var(--text-muted);">Cancelled</span>';
+              }
+              break;
+            }
+
+            const file = files[i];
+            const itemStatus = document.getElementById(`queue-status-${i}`);
+            if (itemStatus) itemStatus.innerHTML = '<span style="color:var(--accent-blue); font-weight:600;">Uploading…</span>';
+
+            uploadCurrentFileTitle.textContent = `${i + 1}/${files.length}: ${file.name}`;
+            uploadOverallStats.textContent = `Batch: File ${i + 1} of ${files.length} (${formatBytes(completedBytes)} / ${formatBytes(totalBatchBytes)})`;
+            const overallBasePct = Math.round((completedBytes / (totalBatchBytes || 1)) * 100);
+            uploadOverallPct.textContent = `Overall: ${overallBasePct}%`;
+            uploadOverallBar.style.width = overallBasePct + '%';
+
+            let startTime = Date.now();
+            let lastLoaded = 0;
+            let lastTime = startTime;
+
+            const uploadSingleFile = () => new Promise((resolve) => {
+              const xhr = new XMLHttpRequest();
+              activeXHR = xhr;
+              const fd = new FormData();
+              fd.append('_csrf', csrf);
+              fd.append('category', category);
+              fd.append('folder', folder);
+              fd.append('min_age', minAge);
+              fd.append('ajax', '1');
+              fd.append('files', file);
+
+              xhr.upload.addEventListener('progress', (ev) => {
+                if (ev.lengthComputable) {
+                  const now = Date.now();
+                  const filePct = Math.round((ev.loaded / ev.total) * 100);
+                  uploadCurrentFileBar.style.width = filePct + '%';
+                  uploadCurrentFileStats.textContent = `${formatBytes(ev.loaded)} / ${formatBytes(ev.total)} (${filePct}%)`;
+
+                  const timeDiff = (now - lastTime) / 1000;
+                  if (timeDiff > 0.4) {
+                    const bytesDiff = ev.loaded - lastLoaded;
+                    const speedBps = bytesDiff / timeDiff;
+                    const speedStr = formatBytes(speedBps) + '/s';
+                    const remainingBytes = ev.total - ev.loaded;
+                    const etaSeconds = speedBps > 0 ? Math.round(remainingBytes / speedBps) : 0;
+                    const etaStr = etaSeconds < 60 ? etaSeconds + 's' : Math.floor(etaSeconds / 60) + 'm ' + (etaSeconds % 60) + 's';
+                    uploadSpeedEta.textContent = `${speedStr} • ETA: ${etaStr}`;
+                    lastLoaded = ev.loaded;
+                    lastTime = now;
+                  }
+
+                  const currentBatchLoaded = completedBytes + ev.loaded;
+                  const currentOverallPct = Math.min(100, Math.round((currentBatchLoaded / (totalBatchBytes || 1)) * 100));
+                  uploadOverallPct.textContent = `Overall: ${currentOverallPct}%`;
+                  uploadOverallBar.style.width = currentOverallPct + '%';
+                }
+              });
+
+              xhr.addEventListener('load', () => {
+                activeXHR = null;
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  resolve({ success: true });
+                } else {
+                  let err = 'Server error ' + xhr.status;
+                  try {
+                    const json = JSON.parse(xhr.responseText);
+                    if (json.message) err = json.message;
+                    else if (json.errors && json.errors.length) err = json.errors.join(', ');
+                  } catch (_) {}
+                  resolve({ success: false, error: err });
+                }
+              });
+
+              xhr.addEventListener('error', () => {
+                activeXHR = null;
+                resolve({ success: false, error: 'Network / connection dropped' });
+              });
+
+              xhr.addEventListener('abort', () => {
+                activeXHR = null;
+                resolve({ success: false, error: 'Cancelled' });
+              });
+
+              xhr.open('POST', uploadForm.action, true);
+              xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+              xhr.setRequestHeader('Accept', 'application/json');
+              xhr.send(fd);
+            });
+
+            const result = await uploadSingleFile();
+
+            if (result.success) {
+              successfulCount++;
+              completedBytes += file.size;
+              if (itemStatus) itemStatus.innerHTML = '<span style="color:var(--status-success); font-weight:600;">✓ Done</span>';
+            } else {
+              failedCount++;
+              completedBytes += file.size;
+              if (itemStatus) itemStatus.innerHTML = `<span style="color:var(--status-danger);" title="${result.error}">✗ Failed (${result.error})</span>`;
+            }
+          }
+
+          uploadSubmitBtn.disabled = false;
+          uploadSubmitBtn.innerHTML = '<span>Start Upload</span>';
+          uploadCurrentFileBar.style.width = '100%';
+          uploadOverallBar.style.width = '100%';
+
+          if (isUploadCancelled) {
+            uploadQueueBadge.textContent = 'Cancelled';
+            uploadQueueBadge.style.background = 'var(--bg-active)';
+            uploadQueueBadge.style.color = 'var(--text-secondary)';
+            uploadCurrentFileTitle.textContent = `Upload aborted (${successfulCount} uploaded)`;
+          } else if (failedCount === 0) {
+            uploadQueueBadge.textContent = 'Completed';
+            uploadQueueBadge.style.background = 'var(--status-success-subtle)';
+            uploadQueueBadge.style.color = 'var(--status-success-text)';
+            uploadCurrentFileTitle.textContent = `All ${successfulCount} files uploaded successfully!`;
+            fileInput.value = '';
+            preview.textContent = '';
+          } else {
+            uploadQueueBadge.textContent = 'Finished with errors';
+            uploadQueueBadge.style.background = 'var(--status-warning-subtle)';
+            uploadQueueBadge.style.color = 'var(--status-warning-text)';
+            uploadCurrentFileTitle.textContent = `${successfulCount} succeeded, ${failedCount} failed.`;
+          }
+        });
       }
     }
 

@@ -1,0 +1,25 @@
+[Unit]
+Description=Mateo Media Server - All In One
+After=network.target local-fs.target transmission-daemon.service
+Wants=network.target transmission-daemon.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/user/APPS/I-ran-out-of-creative-half-insulting-names
+
+# Ensure Werkzeug buffers large file uploads to the SSD rather than the 1.7GB /tmp RAM tmpfs
+Environment="TMPDIR=/var/tmp"
+Environment="MATEO_MAX_UPLOAD=107374182400"
+
+ExecStart=/home/user/APPS/I-ran-out-of-creative-half-insulting-names/venv/bin/python3 /home/user/APPS/I-ran-out-of-creative-half-insulting-names/app.py
+
+# Auto-recovery: restart automatically after 5 seconds if connection drops or machine recovers
+Restart=always
+RestartSec=5
+
+# Generous file limits for streaming direct-play
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
